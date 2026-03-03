@@ -1,0 +1,263 @@
+---
+title: Auto Download Setup
+description: Automatically download and configure CLIProxyAPI with one click
+---
+
+Auto Download is the easiest way to get started with ZeroLimit. The app handles everything: downloading the binary, writing the configuration, starting the server, and logging you in - all in one flow.
+
+## How It Works
+
+When you select Auto Download during onboarding:
+
+1. **Fetch Latest Release**: ZeroLimit queries the GitHub API for the latest release
+2. **Download Binary**: Downloads the correct executable for your operating system
+3. **Extract Files**: Automatically extracts the archive to your system
+4. **Configure Path**: Sets the executable path in ZeroLimit settings
+5. **Set Management Key**: Writes your secret key to `config.yaml`
+6. **Start Server**: Launches the CLI Proxy server
+7. **Auto-Login**: Logs you in automatically
+
+## Setup Steps
+
+<Steps>
+  <Step title="Launch Onboarding">
+    On first launch, click **Get Started** on the welcome screen.
+  </Step>
+
+  <Step title="Select Auto Download">
+    Choose **Auto Download** from the setup mode options.
+    
+    This option shows a blue download icon and the description "Automatically fetch and configure the latest CLI Proxy executable."
+  </Step>
+
+  <Step title="Choose Version">
+    Select which version of CLI Proxy you want to download:
+    
+    <Tabs>
+      <Tab title="Standard">
+        **Repository**: [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI/releases)
+        
+        The original CLI Proxy API with core functionality:
+        - Provider management
+        - API request proxying
+        - Standard authentication
+        - Configuration management
+        
+        **Best for**: Most users who need basic proxy functionality
+      </Tab>
+      <Tab title="Plus">
+        **Repository**: [router-for-me/CLIProxyAPIPlus](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+        
+        Enhanced version with premium features:
+        - All Standard features
+        - GitHub Copilot support
+        - Kiro login integration
+        - Additional enhancements
+        
+        **Best for**: Users who need GitHub Copilot or Kiro integration
+      </Tab>
+    </Tabs>
+    
+    After selecting a version, ZeroLimit will:
+    - Display "Downloading and Extracting..." with a loading indicator
+    - Fetch release info from GitHub API
+    - Download the appropriate asset for your OS
+    - Extract the executable
+  </Step>
+
+  <Step title="Set Management Key">
+    Enter a secret key to protect your CLI Proxy management API.
+    
+    **Example keys:**
+    - `123456` (simple, for testing)
+    - `my-secure-key-2024` (better)
+    - `a8f5k2n9p3x7m1q6` (strong random key)
+    
+    <Warning>Use a strong key if your proxy will be accessible over the network. Anyone with this key can manage your proxy.</Warning>
+    
+    Click **Finish Setup** when ready.
+  </Step>
+
+  <Step title="Automatic Configuration">
+    ZeroLimit automatically:
+    
+    **1. Updates config.yaml:**
+    ```yaml
+    secret-key: "your-management-key"
+    auth-dir: "C:\\Users\\YourName\\.cli-proxy-api"  # Windows
+    # or
+    auth-dir: "/home/username/.cli-proxy-api"  # Linux/macOS
+    ```
+    
+    **2. Starts the server:**
+    - Invokes the CLI Proxy executable
+    - Waits for the server to boot (1.5 seconds)
+    - Verifies health via API check
+    
+    **3. Logs you in:**
+    - API Base: `http://localhost:8317`
+    - Management Key: The key you entered
+    - Remember Credentials: Enabled
+    
+    You'll see a success toast: "CLI Proxy configuration complete!"
+  </Step>
+</Steps>
+
+## Platform-Specific Behavior
+
+### Windows
+
+- Downloads: `windows_x64.zip` or similar
+- Extracted to: Download directory or temporary location
+- Executable: `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+- Auth directory: `C:\Users\<Username>\.cli-proxy-api`
+
+### macOS
+
+- Downloads: `darwin_arm64.tar.gz` (Apple Silicon) or `darwin_x64.tar.gz` (Intel)
+- Extracted to: Download directory or temporary location
+- Executable: `cli-proxy-api` or `cli-proxy-api-plus`
+- Auth directory: `/Users/<username>/.cli-proxy-api`
+- **Note**: You may need to grant execution permissions: `chmod +x cli-proxy-api`
+
+### Linux
+
+- Downloads: `linux_x64.tar.gz` or similar
+- Extracted to: Download directory or temporary location
+- Executable: `cli-proxy-api` or `cli-proxy-api-plus`
+- Auth directory: `/home/<username>/.cli-proxy-api`
+- **Note**: You may need to grant execution permissions: `chmod +x cli-proxy-api`
+
+## GitHub API Details
+
+ZeroLimit fetches release information from:
+
+**Standard:**
+```
+GET https://api.github.com/repos/router-for-me/CLIProxyAPI/releases/latest
+```
+
+**Plus:**
+```
+GET https://api.github.com/repos/router-for-me/CLIProxyAPIPlus/releases/latest
+```
+
+The response includes:
+- `tag_name` or `name` - Version identifier
+- `assets[]` - Array of downloadable files
+  - `name` - Filename (e.g., `cli-proxy-api_windows_x64.zip`)
+  - `browser_download_url` - Direct download link
+
+ZeroLimit searches for an asset matching:
+- OS name: `windows`, `darwin`, or `linux`
+- File extension: `.zip`, `.tar.gz`, or `.tgz`
+
+## Troubleshooting
+
+### Download Failed
+
+**Error**: "Failed to fetch version info"
+
+**Causes:**
+- No internet connection
+- GitHub API is down or rate-limited
+- Firewall blocking GitHub access
+
+**Solutions:**
+1. Check your internet connection
+2. Wait 5-10 minutes and try again (rate limits reset)
+3. Use Manual Setup and download directly from GitHub
+
+### No Compatible Package Found
+
+**Error**: "No compatible package found"
+
+**Causes:**
+- Your OS/architecture isn't supported in the release
+- Release doesn't follow expected naming conventions
+
+**Solutions:**
+1. Visit the GitHub releases page manually
+2. Download the correct binary for your system
+3. Use Manual Setup to select the downloaded file
+
+### Extraction Failed
+
+**Error**: "Extraction failed"
+
+**Causes:**
+- Corrupted download
+- Insufficient permissions
+- Disk space full
+
+**Solutions:**
+1. Try downloading again
+2. Check available disk space
+3. Try running ZeroLimit as administrator (Windows) or with sudo (Linux/macOS)
+4. Use Manual Setup and extract manually
+
+### Server Won't Start After Download
+
+**Symptoms:**
+- "Proxy failed to start" error
+- Health check fails
+
+**Solutions:**
+1. Check if port 8317 is already in use
+2. Run the executable manually to see error messages:
+   ```bash
+   # Windows
+   .\cli-proxy-api.exe
+   
+   # Linux/macOS
+   ./cli-proxy-api
+   ```
+3. Check logs in the CLI Proxy directory
+4. Verify `config.yaml` was created and contains your management key
+
+## Configuration Files
+
+After auto download, you'll have these files:
+
+```
+<download-location>/
+├── cli-proxy-api(.exe)       # Main executable
+├── config.yaml               # Generated configuration
+└── config.example.yaml       # Template (if included)
+```
+
+**config.yaml** (generated):
+```yaml
+secret-key: "your-management-key"
+auth-dir: "C:\\Users\\YourName\\.cli-proxy-api"
+# ... other settings from config.example.yaml
+```
+
+## Next Steps
+
+After successful auto download:
+
+<CardGroup cols={2}>
+  <Card title="Provider Setup" icon="plug" href="/configuration/providers">
+    Add and configure API providers
+  </Card>
+  <Card title="Settings" icon="gear" href="/configuration/settings">
+    Customize CLI Proxy behavior
+  </Card>
+  <Card title="Proxy Settings" icon="power-off" href="/configuration/proxy-settings">
+    Configure proxy server options
+  </Card>
+  <Card title="Auto Updates" icon="arrow-up" href="/features/auto-updates">
+    Keep your proxy up to date
+  </Card>
+</CardGroup>
+
+## Manual Download Alternative
+
+If auto download doesn't work for your situation, you can:
+
+1. Visit the GitHub releases page manually
+2. Download the appropriate binary for your system
+3. Use [Manual Setup](/setup/manual-setup) to configure ZeroLimit
+
+This gives you full control over the download and extraction process.

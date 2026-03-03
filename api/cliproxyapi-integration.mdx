@@ -1,0 +1,450 @@
+---
+title: CLIProxyAPI Integration
+description: How ZeroLimit integrates with CLIProxyAPI for quota management and OAuth flows
+---
+
+# CLIProxyAPI Integration
+
+ZeroLimit acts as a frontend for [CLIProxyAPI](https://github.com/zerolimit-ai/CLIProxyAPI), providing a GUI for managing authentication, viewing quotas, and configuring the proxy server.
+
+## Architecture Overview
+
+```
+┌─────────────────┐
+│   ZeroLimit     │  Tauri Desktop App (Rust + React)
+│   (Frontend)    │
+└────────┬────────┘
+         │
+         │ HTTP API Calls
+         │ (Management API)
+         ▼
+┌─────────────────┐
+│  CLIProxyAPI    │  Local HTTP Server (:25100)
+│   (Backend)     │  Handles auth, quota, OAuth
+└────────┬────────┘
+         │
+         │ Proxied API Calls
+         ▼
+┌─────────────────┐
+│  AI Providers   │  OpenAI, Anthropic, Google, etc.
+│                 │
+└─────────────────┘
+```
+
+## Management API Endpoints
+
+ZeroLimit communicates with CLIProxyAPI through its Management API (default: `http://localhost:25100/v0/management`). All requests require Bearer token authentication.
+
+### Base Configuration
+
+```typescript
+import { apiClient } from '@/services/api/client';
+
+// Configure the API client
+apiClient.setConfig({
+  apiBase: 'http://localhost:25100',
+  managementKey: 'your-management-key',
+  timeout: 30000 // 30 seconds
+});
+```
+
+**Implementation**: `src/services/api/client.ts:26`
+
+---
+
+## Authentication Management
+
+### List Auth Files
+
+Retrieves all stored authentication files.
+
+**Endpoint**: `GET /v0/management/auth-files`
+
+**Response**:
+
+```typescript
+interface AuthFilesResponse {
+  files: Array<{
+    filename: string;
+    provider: string;
+    provider_key: string;
+    size: number;
+    modified: string;
+  }>;
+}
+```
+
+**Usage**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+const response = await authFilesApi.list();
+console.log(`Found ${response.files.length} auth files`);
+```
+
+**Implementation**: `src/services/api/auth.service.ts:9`
+
+---
+
+### Upload Auth File
+
+Uploads a new authentication file (e.g., `.har`, `.txt`, `.json`).
+
+**Endpoint**: `POST /v0/management/auth-files`
+
+**Request**: `multipart/form-data` with file field
+
+**Usage**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+const formData = new FormData();
+formData.append('file', fileBlob, 'claude_session.har');
+
+const result = await authFilesApi.upload(formData);
+console.log('Upload status:', result.status);
+```
+
+**Implementation**: `src/services/api/auth.service.ts:17`
+
+---
+
+### Delete Auth File
+
+Deletes a specific authentication file by name.
+
+**Endpoint**: `DELETE /v0/management/auth-files?name={filename}`
+
+**Usage**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+await authFilesApi.deleteFile('claude_session.har');
+```
+
+**Implementation**: `src/services/api/auth.service.ts:11`
+
+---
+
+### Delete All Auth Files
+
+Deletes all stored authentication files.
+
+**Endpoint**: `DELETE /v0/management/auth-files?all=true`
+
+**Usage**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+await authFilesApi.deleteAll();
+```
+
+**Implementation**: `src/services/api/auth.service.ts:13`
+
+---
+
+## Configuration Management
+
+### Get Configuration (JSON)
+
+Retrieves the current CLIProxyAPI configuration as JSON.
+
+**Endpoint**: `GET /v0/management/config`
+
+**Usage**:
+
+```typescript
+import { configApi } from '@/services/api/config.service';
+
+const config = await configApi.getConfig();
+console.log('Config:', config);
+```
+
+**Implementation**: `src/services/api/config.service.ts:12`
+
+---
+
+### Get Configuration (YAML)
+
+Retrieves the raw YAML configuration for editing.
+
+**Endpoint**: `GET /v0/management/config.yaml`
+
+**Response**: Plain text YAML
+
+**Usage**:
+
+```typescript
+import { configApi } from '@/services/api/config.service';
+
+const yamlContent = await configApi.getConfigYaml();
+console.log(yamlContent);
+```
+
+**Implementation**: `src/services/api/config.service.ts:20`
+
+---
+
+### Update Configuration
+
+Updates the CLIProxyAPI configuration by uploading new YAML content.
+
+**Endpoint**: `PUT /v0/management/config.yaml`
+
+**Request**: `application/yaml` body
+
+**Response**:
+
+```typescript
+interface ConfigUpdateResponse {
+  ok: boolean;
+  changed?: string[]; // List of changed keys
+}
+```
+
+**Usage**:
+
+```typescript
+import { configApi } from '@/services/api/config.service';
+
+const yamlContent = `
+usage-statistics-enabled: true
+logging-to-file: false
+`;
+
+const result = await configApi.updateConfigYaml(yamlContent);
+if (result.ok) {
+  console.log('Config updated. Changed keys:', result.changed);
+}
+```
+
+**Implementation**: `src/services/api/config.service.ts:30`
+
+---
+
+## OAuth Flows
+
+### Start OAuth Flow
+
+Initiates an OAuth authentication flow for a provider.
+
+**Endpoint**: `GET /v0/management/{provider}-auth-url`
+
+**Supported providers**: `codex`, `anthropic`, `antigravity`, `gemini-cli`, `kiro`, `copilot`
+
+**Response**:
+
+```typescript
+interface OAuthStartResponse {
+  url?: string;           // OAuth authorization URL
+  auth_url?: string;      // Alternative field name
+  state?: string;         // OAuth state parameter
+  
+  // Device flow fields (GitHub Copilot)
+  user_code?: string;
+  verification_uri?: string;
+}
+```
+
+**Usage**:
+
+```typescript
+import { oauthApi } from '@/services/api/oauth.service';
+
+// Start OAuth for OpenAI (Codex)
+const response = await oauthApi.startAuth('codex');
+if (response.url) {
+  window.open(response.url, '_blank');
+}
+
+// Start OAuth for Gemini CLI with project ID
+const geminiResponse = await oauthApi.startAuth('gemini-cli', {
+  projectId: 'my-gcp-project'
+});
+```
+
+**Implementation**: `src/services/api/oauth.service.ts:11`
+
+---
+
+### Check OAuth Status
+
+Polls the OAuth flow status using the state parameter.
+
+**Endpoint**: `GET /v0/management/get-auth-status?state={state}`
+
+**Response**:
+
+```typescript
+interface OAuthStatusResponse {
+  status: 'ok' | 'wait' | 'error';
+  completed?: boolean;
+  failed?: boolean;
+  error?: string;
+  message?: string;
+}
+```
+
+**Usage**:
+
+```typescript
+import { oauthApi } from '@/services/api/oauth.service';
+
+const checkStatus = async (state: string) => {
+  const status = await oauthApi.getAuthStatus(state);
+  
+  if (status.status === 'ok' && status.completed) {
+    console.log('OAuth completed successfully!');
+  } else if (status.status === 'wait') {
+    console.log('Waiting for user authorization...');
+  } else if (status.status === 'error') {
+    console.error('OAuth failed:', status.error);
+  }
+};
+```
+
+**Implementation**: `src/services/api/oauth.service.ts:25`
+
+---
+
+### Submit OAuth Callback
+
+Manually submits an OAuth redirect URL (for web UI flows).
+
+**Endpoint**: `POST /v0/management/oauth-callback`
+
+**Request**:
+
+```typescript
+{
+  provider: string;
+  redirect_url: string;
+}
+```
+
+**Response**:
+
+```typescript
+interface OAuthCallbackResponse {
+  status: 'ok';
+}
+```
+
+**Usage**:
+
+```typescript
+import { oauthApi } from '@/services/api/oauth.service';
+
+const redirectUrl = 'https://example.com/callback?code=abc123&state=xyz';
+await oauthApi.submitCallback('codex', redirectUrl);
+```
+
+**Implementation**: `src/services/api/oauth.service.ts:30`
+
+---
+
+## Generic API Call Proxy
+
+The `/v0/management/api-call` endpoint allows making authenticated requests to AI providers through CLIProxyAPI.
+
+**Endpoint**: `POST /v0/management/api-call`
+
+**Request**:
+
+```typescript
+interface ApiCallRequest {
+  authIndex?: string;              // Auth file index (e.g., "0")
+  method: string;                  // HTTP method
+  url: string;                     // Target URL
+  header?: Record<string, string>; // Additional headers
+  data?: string;                   // Request body (JSON string)
+}
+```
+
+**Response**:
+
+```typescript
+interface ApiCallResult {
+  statusCode: number;
+  header: Record<string, string[]>;
+  bodyText: string;
+  body: any | null; // Parsed JSON or raw text
+}
+```
+
+**Usage**:
+
+```typescript
+import { apiCallApi } from '@/services/api/apiCall';
+
+const result = await apiCallApi.request({
+  authIndex: '0',
+  method: 'GET',
+  url: 'https://api.openai.com/v1/models',
+  header: {
+    'Content-Type': 'application/json'
+  }
+});
+
+if (result.statusCode === 200) {
+  console.log('Models:', result.body);
+}
+```
+
+**Implementation**: `src/services/api/apiCall.ts:57`
+
+---
+
+## Server Version Detection
+
+ZeroLimit automatically detects the CLIProxyAPI server version from response headers.
+
+**Headers checked**:
+- `x-cpa-version` or `x-server-version`
+- `x-cpa-build-date` or `x-server-build-date`
+
+**Implementation**: The `apiClient` interceptor automatically dispatches a `server-version-update` event when version headers are detected.
+
+```typescript
+window.addEventListener('server-version-update', (event: CustomEvent) => {
+  console.log('Server version:', event.detail.version);
+  console.log('Build date:', event.detail.buildDate);
+});
+```
+
+**Implementation**: `src/services/api/client.ts:102`
+
+---
+
+## Error Handling
+
+All API calls return structured errors:
+
+```typescript
+interface ApiError extends Error {
+  status?: number;   // HTTP status code
+  code?: string;     // Error code
+  details?: unknown; // Additional error details
+  data?: unknown;    // Response data
+}
+```
+
+**Example**:
+
+```typescript
+try {
+  await authFilesApi.list();
+} catch (error) {
+  if ((error as ApiError).status === 401) {
+    console.error('Unauthorized - check management key');
+  }
+}
+```
+
+**401 Unauthorized**: Automatically triggers an `unauthorized` event on the window object for global handling.
+
+**Implementation**: `src/services/api/client.ts:122`

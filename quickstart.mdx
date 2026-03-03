@@ -1,80 +1,354 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get up and running with ZeroLimit in minutes
 ---
 
-## Get started in three steps
+# Quick Start
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through setting up ZeroLimit and connecting it to CLIProxyAPI to start monitoring your AI coding assistant quotas.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Before you begin, make sure you have [installed ZeroLimit](/installation) on your system.
 </Note>
+
+## First Launch
+
+When you launch ZeroLimit for the first time, you'll be greeted with an onboarding wizard that guides you through the setup process.
+
+<Steps>
+  <Step title="Welcome Screen">
+    Click **Get Started** to begin the setup wizard.
+    
+    <img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/screenshots/onboard.png" alt="Onboarding Welcome" />
+  </Step>
+  
+  <Step title="Choose Setup Method">
+    ZeroLimit offers three setup methods. Select the one that best fits your needs:
+    
+    <Tabs>
+      <Tab title="Auto Download (Recommended)">
+        The easiest way to get started. ZeroLimit will automatically download and configure CLI Proxy.
+        
+        **Best for**: First-time users who want the quickest setup.
+      </Tab>
+      <Tab title="Manual Setup">
+        Specify the path to an existing CLIProxyAPI executable.
+        
+        **Best for**: Users who already have CLI Proxy downloaded or prefer manual control.
+      </Tab>
+      <Tab title="Remote Server">
+        Connect to a remote HTTPS server.
+        
+        **Best for**: Teams using a centralized CLI Proxy deployment.
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Setup Method 1: Auto Download
+
+This is the recommended approach for most users.
+
+<Steps>
+  <Step title="Select Auto Download">
+    In the onboarding wizard, click **Auto Download**.
+  </Step>
+  
+  <Step title="Choose Version">
+    Select which version of CLI Proxy to download:
+    
+    <CodeGroup>
+    ```text Standard
+    The original CLI Proxy API
+    Supports: Gemini, Claude, OpenAI, Antigravity
+    ```
+    
+    ```text Plus
+    Enhanced version with additional providers
+    Supports: All Standard providers + GitHub Copilot + Kiro
+    ```
+    </CodeGroup>
+    
+    <Info>
+      The Plus version is required for GitHub Copilot and Kiro (CodeWhisperer) support.
+    </Info>
+  </Step>
+  
+  <Step title="Automatic Download">
+    ZeroLimit will automatically:
+    - Download the correct binary for your operating system
+    - Extract the files to the appropriate location
+    - Prepare the configuration
+    
+    <Tip>
+      This may take a minute depending on your internet connection.
+    </Tip>
+  </Step>
+  
+  <Step title="Set Management Key">
+    Enter a secure **Management Key**. This key protects the management API.
+    
+    <Warning>
+      Store this key safely - you'll need it to log in to ZeroLimit.
+    </Warning>
+  </Step>
+  
+  <Step title="Finish Setup">
+    Click **Finish Setup**. ZeroLimit will:
+    - Write the `config.yaml` file
+    - Start the CLI Proxy server
+    - Automatically log you in
+    
+    You're ready to use ZeroLimit!
+  </Step>
+</Steps>
+
+## Setup Method 2: Manual Setup
+
+For users who prefer to manage CLI Proxy themselves.
+
+<Steps>
+  <Step title="Download CLI Proxy">
+    Download the CLI Proxy executable manually:
+    
+    - **Standard**: [CLIProxyAPI Releases](https://github.com/router-for-me/CLIProxyAPI/releases)
+    - **Plus**: [CLIProxyAPI Plus Releases](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+    
+    Extract the downloaded archive and note the location of the executable.
+  </Step>
+  
+  <Step title="Select Manual Location">
+    In the onboarding wizard, click **Manual Location**.
+  </Step>
+  
+  <Step title="Browse to Executable">
+    Click **Browse** and navigate to your CLI Proxy executable:
+    - Windows: `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+    - macOS/Linux: `cli-proxy-api` or `cli-proxy-api-plus`
+  </Step>
+  
+  <Step title="Set Management Key">
+    Enter the same **Management Key** that you configured in CLI Proxy's `config.yaml` file.
+    
+    <Note>
+      If you haven't configured CLI Proxy yet, rename `config-example.yaml` to `config.yaml` and set the `secret-key` value.
+    </Note>
+  </Step>
+  
+  <Step title="Finish Setup">
+    Click **Finish Setup** to complete the configuration and start using ZeroLimit.
+  </Step>
+</Steps>
+
+## Setup Method 3: Remote Server
+
+Connect to a remote CLI Proxy server hosted elsewhere.
+
+<Steps>
+  <Step title="Skip Onboarding">
+    Click **Skip For Now** during the onboarding wizard.
+  </Step>
+  
+  <Step title="Open Login Page">
+    You'll be taken to the login screen.
+  </Step>
+  
+  <Step title="Enter Server Details">
+    Fill in the connection information:
+    
+    - **API Base URL**: Your remote server address (e.g., `https://llm.yourdomain.com`)
+    - **Management Key**: The `secret-key` from your server's `config.yaml`
+    
+    <Info>
+      Check **Remember credentials** to save your login details for future sessions.
+    </Info>
+  </Step>
+  
+  <Step title="Login">
+    Click **Login** to connect to the remote server.
+  </Step>
+</Steps>
+
+## First Login
+
+After completing setup, you'll see the main dashboard:
+
+<img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/screenshots/dashboard.png" alt="Dashboard" />
+
+The dashboard displays:
+
+- **Total Accounts**: Number of authenticated AI provider accounts
+- **System Status**: Connection status of CLI Proxy
+- **Usage Statistics**: Total requests and tokens (if enabled)
+- **Request Trends**: Visual charts showing usage over time
+- **Token Usage**: Token consumption patterns
+
+## Adding Provider Accounts
+
+To start monitoring quotas, you need to authenticate with AI providers.
+
+<Steps>
+  <Step title="Navigate to Providers">
+    Click **Providers** in the sidebar menu.
+    
+    <img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/screenshots/providers.png" alt="Providers Page" />
+  </Step>
+  
+  <Step title="Select a Provider">
+    Choose from the available providers:
+    
+    <CardGroup cols={2}>
+      <Card title="Antigravity" icon="rocket">
+        OAuth authentication
+      </Card>
+      <Card title="OpenAI Codex" icon="code">
+        OAuth authentication
+      </Card>
+      <Card title="Gemini CLI" icon="sparkles">
+        OAuth authentication (requires Project ID)
+      </Card>
+      <Card title="Anthropic Claude" icon="brain">
+        OAuth authentication
+      </Card>
+      <Card title="Kiro" icon="aws">
+        OAuth authentication (Plus only)
+      </Card>
+      <Card title="GitHub Copilot" icon="github">
+        OAuth authentication (Plus only)
+      </Card>
+    </CardGroup>
+  </Step>
+  
+  <Step title="Authenticate">
+    Click **Add Account** next to the provider and follow the OAuth flow in your browser.
+    
+    <Note>
+      For Gemini CLI, you'll also need to provide a Project ID during authentication.
+    </Note>
+  </Step>
+  
+  <Step title="Verify Connection">
+    Once authenticated, the provider will appear in your account list with quota information.
+  </Step>
+</Steps>
+
+## Viewing Quota Information
+
+After adding accounts, navigate to the **Quota** page to see detailed quota information:
+
+<img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/screenshots/quota.png" alt="Quota Page" />
+
+The quota page shows:
+
+- **Provider cards** with usage bars
+- **Remaining quota** for each account
+- **Quota limits** and reset times
+- **Filter by provider** to focus on specific accounts
+
+<Tip>
+  Click the refresh button in the top-right corner to manually update quota data.
+</Tip>
+
+## Configuring Settings
+
+Customize ZeroLimit to fit your workflow:
+
+<Steps>
+  <Step title="Open Settings">
+    Click **Settings** in the sidebar.
+    
+    <img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/screenshots/settings.png" alt="Settings Page" />
+  </Step>
+  
+  <Step title="CLI Proxy Server">
+    Configure proxy behavior:
+    
+    - **Executable Path**: Update the path to your CLI Proxy executable (local only)
+    - **Auto-start on launch**: Automatically start the proxy when ZeroLimit opens
+    - **Run in background**: Hide to system tray when closing the window
+    - **Check for Updates**: Enable automatic update checks for CLI Proxy
+  </Step>
+  
+  <Step title="Appearance">
+    Customize the interface:
+    
+    - **Theme**: Choose Light, Dark, or System (follows OS preference)
+    - **Language**: Select from English, Chinese, Indonesian, Japanese, Korean, Vietnamese, or Thai
+  </Step>
+  
+  <Step title="Save Changes">
+    Changes are saved automatically.
+  </Step>
+</Steps>
+
+## System Tray Usage
+
+When **Run in background** is enabled:
+
+- Closing the window minimizes ZeroLimit to the system tray
+- Click the tray icon to restore the window
+- Right-click the tray icon for quick actions:
+  - **Open**: Restore the main window
+  - **Quit**: Completely exit ZeroLimit
+
+## Troubleshooting
+
+Encountering issues? Here are common solutions:
+
+<AccordionGroup>
+  <Accordion title="Proxy Won't Start (Local)">
+    - Verify the executable path is correct in Settings
+    - Check if another instance of CLI Proxy is already running
+    - Try running ZeroLimit as Administrator (Windows) or with sudo (Linux/macOS)
+    - Check the logs page for error messages
+  </Accordion>
+  
+  <Accordion title="Auto Download Failed">
+    - Check your internet connection
+    - GitHub API may be rate-limited - wait a few minutes and try again
+    - Use Manual Setup instead and download the binary directly
+  </Accordion>
+  
+  <Accordion title="Connection Failed">
+    - Ensure CLI Proxy is running (green status indicator)
+    - Verify the API Base URL is correct
+    - For HTTPS connections, check that the SSL certificate is valid
+    - Check if a firewall is blocking the connection
+  </Accordion>
+  
+  <Accordion title="Login Failed">
+    - Verify your Management Key matches the `secret-key` in `config.yaml`
+    - If using a fresh CLI Proxy installation, rename `config-example.yaml` to `config.yaml`
+    - Restart the CLI Proxy server after making configuration changes
+  </Accordion>
+  
+  <Accordion title="Quota Data Not Loading">
+    - Make sure you've authenticated with at least one provider
+    - Click the refresh button to manually reload quota data
+    - Check the connection status on the dashboard
+    - Verify CLI Proxy has network access to provider APIs
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you're up and running:
+
+<CardGroup cols={2}>
+  <Card title="Explore the Dashboard" icon="chart-line" href="#viewing-quota-information">
+    Dive into usage statistics and trends
+  </Card>
+  <Card title="Add More Providers" icon="plus" href="#adding-provider-accounts">
+    Connect additional AI coding assistants
+  </Card>
+  <Card title="Customize Settings" icon="gear" href="#configuring-settings">
+    Tailor ZeroLimit to your preferences
+  </Card>
+  <Card title="Join the Community" icon="github" href="https://github.com/0xtbug/zero-limit">
+    Report issues and contribute on GitHub
+  </Card>
+</CardGroup>
+
+<Tip>
+  Enable **Auto-start on launch** in Settings to have CLI Proxy ready whenever you open ZeroLimit!
+</Tip>

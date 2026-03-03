@@ -1,0 +1,219 @@
+---
+title: Provider Configuration
+description: Configure and manage AI provider connections via OAuth authentication
+---
+
+## Overview
+
+ZeroLimit supports multiple AI provider integrations through OAuth authentication. Each provider connection is managed independently, allowing you to authenticate multiple accounts per provider.
+
+## Supported Providers
+
+ZeroLimit supports the following AI providers:
+
+| Provider | ID | OAuth Support | Project ID Required | Version Requirement |
+|----------|----|--------------|--------------------|---------------------|
+| **Antigravity** | `antigravity` | Yes | No | Standard/Plus |
+| **OpenAI Codex** | `codex` | Yes | No | Standard/Plus |
+| **Gemini CLI** | `gemini-cli` | Yes | Yes (Optional) | Standard/Plus |
+| **Claude (Anthropic)** | `anthropic` | Yes | No | Standard/Plus |
+| **Kiro (CodeWhisperer)** | `kiro` | Yes | No | Standard/Plus |
+| **GitHub Copilot** | `copilot` | Yes (Device Flow) | No | **Plus Only** |
+
+<Warning>
+**GitHub Copilot** and **Kiro** require ZeroLimit to be connected to a CLIProxyAPI **Plus** version. These providers will not be available when using the standard version.
+</Warning>
+
+## Adding a Provider
+
+### Standard OAuth Flow
+
+Most providers use a standard OAuth authentication flow:
+
+1. Navigate to **Providers** page
+2. Scroll to **Add Provider** section
+3. Click on the provider you want to add
+4. A browser window opens with the provider's OAuth authorization page
+5. Complete the authentication in your browser
+6. Return to ZeroLimit - the connection completes automatically
+
+### Gemini CLI (Project ID Required)
+
+Gemini CLI supports optional Google Cloud Project ID configuration:
+
+1. Click **Gemini CLI** from the providers list
+2. (Optional) Enter your Google Cloud Project ID
+   - Leave blank to auto-select a project
+3. Click **Connect** or **Auto Select**
+4. Complete OAuth flow in browser
+
+<Tip>
+The Project ID is optional. If not provided, ZeroLimit automatically selects an available Google Cloud project associated with your account.
+</Tip>
+
+### GitHub Copilot (Device Flow)
+
+GitHub Copilot uses OAuth Device Flow authentication:
+
+1. Click **GitHub Copilot** from providers list
+2. A device code is displayed on screen
+3. Click **Open Link** to visit GitHub's device activation page
+4. Enter the displayed code
+5. Complete authorization on GitHub
+6. Connection completes automatically
+
+**Example Flow:**
+
+```
+Device Code: ABCD-1234
+
+1. Visit: https://github.com/login/device
+2. Enter code: ABCD-1234
+3. Authorize ZeroLimit access
+4. Return to app
+```
+
+### Kiro (CodeWhisperer)
+
+Kiro uses a web-based OAuth page hosted by the CLI Proxy API:
+
+1. Click **Kiro (CodeWhisperer)** from providers list
+2. Browser opens to CLI Proxy OAuth page: `{apiBase}/v0/oauth/kiro`
+3. Complete authentication flow
+4. Connection status updates automatically
+
+## Managing Connected Accounts
+
+### View Connected Accounts
+
+The Providers page displays all connected accounts grouped by provider:
+
+- **Provider name** with account count badge
+- **Expand/collapse** groups to view individual accounts
+- **Account details** showing email or identifier
+
+### Privacy Mode
+
+Click the **eye icon** in the top-right to toggle privacy mode, which masks sensitive information like email addresses.
+
+**Privacy Mode OFF:**  
+`john.doe@example.com`
+
+**Privacy Mode ON:**  
+`j***@e***`
+
+### Account Actions
+
+For each connected account, you can:
+
+| Action | Description |
+|--------|-------------|
+| **Download** | Save auth file (`.json`) to local disk |
+| **Copy Refresh Token** | Copy the OAuth refresh token to clipboard |
+| **Delete** | Remove the account connection |
+
+### Bulk Operations
+
+#### Copy All Refresh Tokens
+
+1. Click **Copy All** button
+2. Select providers to include
+3. Click **Copy**
+4. All refresh tokens are copied to clipboard (one per line)
+
+#### Download All Files
+
+1. Click **Download All**
+2. Select destination folder
+3. All auth files download as individual `.json` files
+
+#### Upload Auth Files
+
+1. Click **Upload**
+2. Select one or more `.json` auth files
+3. Files are uploaded and added to connected accounts
+
+#### Delete All Accounts
+
+1. Click **Delete All**
+2. Confirm deletion in dialog
+3. All connected accounts are permanently removed
+
+<Warning>
+Deleting accounts is **permanent** and cannot be undone. You'll need to re-authenticate each provider to restore access.
+</Warning>
+
+## Manual Callback Flow
+
+If automatic OAuth polling fails, you can manually submit the callback URL:
+
+1. After starting OAuth flow, locate **Manual Callback** section
+2. Complete authentication in browser
+3. Copy the callback URL from browser address bar
+   - Format: `http://localhost:8317/callback?code=...&state=...`
+4. Paste into **Callback URL** field
+5. Click **Verify**
+
+## OAuth Provider Mappings
+
+### Callback Providers
+
+Some providers use alternate callback identifiers:
+
+```typescript
+'gemini-cli' → 'gemini'
+```
+
+### Auth URL Providers
+
+Some providers use alternate auth URL identifiers:
+
+```typescript
+'copilot' → 'github'
+```
+
+## Antigravity Model Groups
+
+Antigravity provider supports multiple model groups:
+
+| Group | Models |
+|-------|--------|
+| **Claude/GPT** | `claude-sonnet-4-5-thinking`, `claude-opus-4-5-thinking`, `claude-sonnet-4-5` |
+| **Gemini 3 Pro** | `gemini-3-pro-high`, `gemini-3-pro-low` |
+| **Gemini 2.5 Flash** | `gemini-2.5-flash`, `gemini-2.5-flash-thinking` |
+| **Gemini 2.5 Flash Lite** | `gemini-2.5-flash-lite` |
+| **Gemini 2.5 CU** | `rev19-uic3-1p` |
+| **Gemini 3 Flash** | `gemini-3-flash` |
+| **Gemini 3 Pro Image** | `gemini-3-pro-image` |
+
+## Troubleshooting
+
+### Connection Fails
+
+- Verify CLI Proxy API server is running
+- Check internet connection
+- Ensure management key is valid
+- Try manual callback flow if automatic polling fails
+
+### Plus-Only Provider Blocked
+
+If you see "This provider requires CLIProxyAPI Plus version":
+
+1. Go to [CLI Proxy Settings](/configuration/proxy-settings)
+2. Switch to **Plus** version
+3. Restart the proxy server
+4. Return to Providers page and retry
+
+### Provider Not Appearing
+
+Ensure you're connected to CLI Proxy API:
+
+1. Check connection status in header
+2. Verify server is running (Settings → CLI Proxy)
+3. Refresh the page
+
+## Related Pages
+
+- [CLI Proxy Settings](/configuration/proxy-settings) - Server configuration
+- [Adding Accounts](/guides/adding-accounts) - OAuth authentication guide
+- [Application Settings](/configuration/settings) - General preferences

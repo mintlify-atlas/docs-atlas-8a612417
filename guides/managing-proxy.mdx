@@ -1,0 +1,432 @@
+---
+title: Managing the CLI Proxy
+description: Learn how to start, stop, configure, and update the CLI Proxy server
+---
+
+## Overview
+
+The CLI Proxy (CLIProxyAPI) is the backend server that manages authentication and routes API requests to AI providers. ZeroLimit provides a comprehensive interface to manage the proxy lifecycle, configuration, and updates.
+
+## Server Status
+
+Check the current proxy status from the **Settings** page:
+
+- **Running** (green indicator) - Server is active and accepting requests
+- **Stopped** (gray text) - Server is not running
+
+<Note>
+You must be logged in to see server status and management controls.
+</Note>
+
+## Starting the Proxy
+
+<Steps>
+
+<Step title="Navigate to Settings">
+Click **Settings** in the main navigation.
+</Step>
+
+<Step title="Verify executable path">
+In the **CLI Proxy Server** section, confirm that the **Executable Path** shows the correct path to your `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`.
+
+If the path is missing or incorrect:
+1. Click **Browse**
+2. Navigate to your CLI Proxy installation folder
+3. Select the executable file
+</Step>
+
+<Step title="Start the server">
+Click the **Start** button with the play icon.
+
+The server will start in the background, and the status will change to "Running" with a green checkmark.
+</Step>
+
+<Step title="Verify connection">
+Once running, the Dashboard should show "System Status: Operational" indicating successful connection.
+</Step>
+
+</Steps>
+
+<Tip>
+Enable **Auto-start on launch** in Settings to automatically start the proxy when ZeroLimit opens.
+</Tip>
+
+## Stopping the Proxy
+
+<Steps>
+
+<Step title="Navigate to Settings">
+Go to the **Settings** page.
+</Step>
+
+<Step title="Stop the server">
+In the **CLI Proxy Server** section, click the **Stop** button with the square icon.
+
+The server will shut down gracefully, and the status will change to "Stopped".
+</Step>
+
+</Steps>
+
+<Warning>
+Stopping the proxy will disconnect ZeroLimit and make all provider APIs unavailable until restarted.
+</Warning>
+
+## Configuring the Proxy
+
+### Auto-start on Launch
+
+Automatically start the proxy when ZeroLimit opens:
+
+1. Go to **Settings** page
+2. Find **Auto-start on launch** toggle
+3. Enable the toggle
+4. Proxy will start automatically on next app launch
+
+**When to use**:
+- You use ZeroLimit regularly
+- You want seamless startup experience
+- You have a local proxy installation
+
+### Run in Background
+
+Keep the proxy running when ZeroLimit window is closed:
+
+1. Go to **Settings** page
+2. Find **Run in background** toggle
+3. Enable the toggle
+4. Close ZeroLimit - the app minimizes to system tray
+5. Proxy continues running
+
+**System tray behavior**:
+- App icon appears in system tray
+- Click icon to restore window
+- Right-click icon for menu:
+  - **Open** - Restore window
+  - **Quit** - Stop proxy and exit completely
+
+**When to use**:
+- You want the proxy available continuously
+- You use other tools that connect to the proxy
+- You don't want to restart the proxy frequently
+
+### Executable Path
+
+Change the CLI Proxy executable location:
+
+1. Go to **Settings** page
+2. Click **Browse** next to Executable Path
+3. Navigate to the new location
+4. Select the executable file (`cli-proxy-api.exe` or `cli-proxy-api-plus.exe`)
+5. Path is saved automatically
+
+<Note>
+If the proxy is running when you change the path, you'll need to restart it for the change to take effect.
+</Note>
+
+## Updating the Proxy
+
+### Check for Updates
+
+Manually check if a newer version is available:
+
+<Steps>
+
+<Step title="Navigate to Settings">
+Go to the **Settings** page and locate the **Version** section under CLI Proxy Server.
+</Step>
+
+<Step title="Check for updates">
+Click **Check for Update**.
+
+ZeroLimit will:
+- Query GitHub for the latest release
+- Compare with your installed version
+- Display "Update available" if a newer version exists
+- Show "Already on the latest version" if current
+</Step>
+
+</Steps>
+
+### Update to Latest Version
+
+When an update is available:
+
+<Steps>
+
+<Step title="Click Update Now">
+When the version section shows a green arrow pointing to the new version, click **Update Now**.
+</Step>
+
+<Step title="Wait for download">
+ZeroLimit will:
+1. Stop the current proxy server
+2. Download the latest release from GitHub
+3. Extract the new executable
+4. Replace the old version
+5. Restart the proxy automatically
+
+Progress is shown with a loading spinner.
+</Step>
+
+<Step title="Verify update">
+After completion:
+- Version number updates to the new version
+- Server status shows "Running"
+- Toast notification confirms success
+</Step>
+
+</Steps>
+
+<Warning>
+During the update process, the proxy is stopped and API requests will fail. Plan updates during low-activity periods.
+</Warning>
+
+### Automatic Update Detection
+
+ZeroLimit automatically checks for updates when:
+- You click "Check for Update"
+- The app starts (if enabled in preferences)
+
+The version section shows:
+- **Current version** - Your installed version with build date
+- **Latest version** - Newest available version (if different)
+- **Green arrow** - Indicates update available
+
+## Switching Between Standard and Plus
+
+CLIProxyAPI comes in two versions:
+- **Standard** - Core providers (Antigravity, ChatGPT, Claude, Gemini)
+- **Plus** - All providers including Kiro and GitHub Copilot
+
+### Switch to Plus
+
+If you're using Standard and want Plus features:
+
+<Steps>
+
+<Step title="Navigate to Settings">
+Go to the **Settings** page.
+</Step>
+
+<Step title="Click Switch to Plus">
+In the **Switch Version** section, click **Switch to Plus**.
+</Step>
+
+<Step title="Wait for download">
+ZeroLimit will:
+1. Stop the current proxy
+2. Download CLIProxyAPI Plus from GitHub
+3. Extract to the same directory
+4. Update the executable path
+5. Restart the proxy
+</Step>
+
+<Step title="Verify switch">
+After completion:
+- Executable path shows `cli-proxy-api-plus.exe`
+- "Currently using Plus version" displays
+- Plus-only providers (Kiro, Copilot) are now available in Providers page
+</Step>
+
+</Steps>
+
+### Switch to Standard
+
+If you're using Plus and want to downgrade:
+
+<Steps>
+
+<Step title="Click Switch to Standard">
+In Settings > **Switch Version**, click **Switch to Standard**.
+</Step>
+
+<Step title="Wait for download">
+Same process as switching to Plus, but downloads the Standard version instead.
+</Step>
+
+</Steps>
+
+<Warning>
+Switching versions removes access to Plus-only providers. Existing Kiro and Copilot accounts will not be accessible until you switch back to Plus.
+</Warning>
+
+## Remote Server Configuration
+
+If you're using a remote CLI Proxy server instead of a local installation:
+
+### Connecting to Remote Server
+
+<Steps>
+
+<Step title="Skip onboarding or logout">
+If you completed onboarding with local setup, logout first from Settings.
+</Step>
+
+<Step title="Enter remote details">
+On the login screen:
+- **API Base URL**: `https://your-domain.com` or `https://your-domain.com:8317`
+- **Management Key**: The `secret-key` value from server's `config.yaml`
+- Enable **Remember credentials** to stay logged in
+</Step>
+
+<Step title="Click Login">
+ZeroLimit will connect to the remote server and verify credentials.
+</Step>
+
+</Steps>
+
+<Note>
+For remote servers, the Start/Stop controls are hidden since you don't manage the server lifecycle.
+</Note>
+
+### Remote Server Features
+
+When connected remotely:
+- ✅ All provider management works normally
+- ✅ Quota monitoring is available
+- ✅ Dashboard statistics work (if enabled on server)
+- ✅ Settings can be viewed (server-side config)
+- ❌ Cannot start/stop the server
+- ❌ Cannot update the server version
+- ❌ Cannot switch between Standard/Plus
+
+## Configuration File (config.yaml)
+
+The CLI Proxy server is configured via `config.yaml` in the installation directory.
+
+### Key Settings
+
+**Authentication**
+```yaml
+secret-key: your-management-key-here
+```
+This is your Management Key for logging into ZeroLimit.
+
+**Server Port**
+```yaml
+port: 8317
+```
+The port the server listens on (default: 8317).
+
+**Usage Statistics**
+```yaml
+usage-statistics-enabled: true
+```
+Enables/disables usage tracking for Dashboard statistics.
+
+**Logging**
+```yaml
+logging-to-file: false
+```
+Enables/disables writing logs to a file.
+
+### Editing Configuration
+
+You can edit some settings directly from ZeroLimit:
+
+**Usage Statistics**
+1. Go to **Settings** page
+2. Find **Usage Statistics** card
+3. Toggle **Enabled** on/off
+4. Change is applied immediately (no restart required)
+
+**Logging to File**
+1. Go to **Settings** page
+2. Find **Logging** card
+3. Toggle **Enabled** on/off
+4. Change is applied immediately
+
+<Tip>
+For advanced configuration changes, edit `config.yaml` manually with a text editor, then restart the proxy.
+</Tip>
+
+## Troubleshooting
+
+### Proxy won't start
+
+**Problem**: Clicking Start does nothing or shows an error.
+
+**Solution**:
+1. Verify the executable path is correct
+2. Check if another instance is already running:
+   - Open Task Manager (Windows)
+   - Look for `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+   - End the process if found
+3. Try running the executable directly to see error messages
+4. Check Windows Firewall isn't blocking the executable
+5. Run as Administrator if permission errors occur
+
+### Port already in use
+
+**Problem**: Server fails to start with port conflict error.
+
+**Solution**:
+1. Open `config.yaml` in the CLI Proxy directory
+2. Change `port: 8317` to a different port (e.g., `8318`)
+3. Save the file
+4. Start the proxy
+5. Update API Base URL in ZeroLimit login: `http://localhost:8318`
+
+### Cannot connect after starting
+
+**Problem**: Server shows "Running" but ZeroLimit shows disconnected.
+
+**Solution**:
+1. Check the proxy is actually running:
+   - Open browser to `http://localhost:8317`
+   - Should see: `{"message": "CLI Proxy API Server"}`
+2. Verify API Base URL in login matches server address
+3. Check Windows Firewall isn't blocking connections
+4. Try logging out and logging back in
+5. Restart the proxy from Settings
+
+### Update failed
+
+**Problem**: Update process shows an error.
+
+**Solution**:
+1. Check your internet connection
+2. Verify you can access `github.com`
+3. Check if Windows Defender or antivirus blocked the download
+4. Try updating manually:
+   - Download from [CLIProxyAPI Releases](https://github.com/router-for-me/CLIProxyAPI/releases)
+   - Extract to your installation folder
+   - Replace the old executable
+   - Restart ZeroLimit
+
+### Version switch stuck
+
+**Problem**: Switching between Standard/Plus freezes or fails.
+
+**Solution**:
+1. Force-stop the proxy:
+   - Open Task Manager
+   - End `cli-proxy-api.exe` process
+2. Wait 10 seconds
+3. Try the switch again
+4. If still stuck, manually download and install:
+   - [Standard version](https://github.com/router-for-me/CLIProxyAPI/releases)
+   - [Plus version](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+5. Update executable path in Settings
+
+### Auto-start doesn't work
+
+**Problem**: Proxy doesn't start when ZeroLimit launches.
+
+**Solution**:
+1. Verify **Auto-start on launch** is enabled in Settings
+2. Check that Executable Path is valid
+3. Try starting manually to see if there's an error
+4. Disable and re-enable Auto-start
+5. Check antivirus isn't blocking startup
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Accounts" icon="user-plus" href="/guides/adding-accounts">
+    Connect provider accounts now that your proxy is running
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/troubleshooting">
+    Solutions for common proxy and connection issues
+  </Card>
+</CardGroup>

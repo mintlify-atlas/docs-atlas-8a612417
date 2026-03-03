@@ -1,0 +1,284 @@
+---
+title: Tauri Commands
+description: Backend commands exposed from Rust to the frontend via Tauri's IPC
+---
+
+# Tauri Commands
+
+ZeroLimit exposes Rust backend functionality to the frontend through Tauri commands. All commands are invoked from the frontend using Tauri's `invoke()` function.
+
+## CLI Proxy Management
+
+### start_cli_proxy
+
+Starts the CLI Proxy server process.
+
+<ParamField path="exe_path" type="string" required>
+  Absolute path to the CLI Proxy executable
+</ParamField>
+
+<ResponseField name="pid" type="number">
+  Process ID of the started CLI Proxy server
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+const pid = await invoke<number>('start_cli_proxy', {
+  exePath: '/home/user/.zerolimit/cli_proxy/CLIProxyAPI'
+});
+console.log(`CLI Proxy started with PID: ${pid}`);
+```
+
+**Implementation**: `src-tauri/src/commands/cli_proxy.rs:18`
+
+---
+
+### stop_cli_proxy
+
+Stops the running CLI Proxy server process.
+
+<ResponseField name="result" type="void">
+  Returns nothing on success
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+await invoke('stop_cli_proxy');
+console.log('CLI Proxy stopped');
+```
+
+**Implementation**: `src-tauri/src/commands/cli_proxy.rs:64`
+
+**Details**
+- On Windows: Uses `taskkill /F /T` for reliable termination
+- On Unix: Uses process `kill()` followed by fallback `pkill` if needed
+- Cleans up both process ID and process name tracking
+
+---
+
+### is_cli_proxy_running
+
+Checks if the CLI Proxy server is currently running.
+
+<ResponseField name="running" type="boolean">
+  `true` if CLI Proxy is running, `false` otherwise
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+const isRunning = await invoke<boolean>('is_cli_proxy_running');
+if (isRunning) {
+  console.log('CLI Proxy is active');
+}
+```
+
+**Implementation**: `src-tauri/src/commands/cli_proxy.rs:121`
+
+---
+
+## Download & Installation
+
+### download_and_extract_proxy
+
+Downloads a CLI Proxy archive (ZIP or TAR.GZ) and extracts it to the target directory.
+
+<ParamField path="url" type="string" required>
+  Download URL for the proxy archive (.zip, .tar.gz, or .tgz)
+</ParamField>
+
+<ParamField path="target_dir" type="string | null">
+  Target extraction directory. If `null`, defaults to `~/.zerolimit/cli_proxy`
+</ParamField>
+
+<ResponseField name="exe_path" type="string">
+  Absolute path to the extracted CLI Proxy executable
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+const exePath = await invoke<string>('download_and_extract_proxy', {
+  url: 'https://example.com/releases/CLIProxyAPI-v1.2.3-linux.tar.gz',
+  targetDir: null // Use default directory
+});
+console.log(`Proxy installed at: ${exePath}`);
+```
+
+**Implementation**: `src-tauri/src/commands/download.rs:47`
+
+**Behavior**
+- Removes old proxy executables while preserving config files (`.yaml`, `.yml`, `.json`, `.toml`, `.env`)
+- Automatically renames `config.example.yaml` to `config.yaml` if it doesn't exist
+- Sets executable permissions on Unix systems (0755)
+- Supports both ZIP and TAR.GZ archives
+- Recursively searches for the executable if not found in root directory
+
+---
+
+### find_alternate_proxy_exe
+
+Finds an alternate CLI Proxy executable in the same directory (e.g., switching between standard and plus versions).
+
+<ParamField path="current_exe_path" type="string" required>
+  Path to the currently installed proxy executable
+</ParamField>
+
+<ParamField path="target_version" type="string" required>
+  Target version type: `"plus"` or any other string (for standard version)
+</ParamField>
+
+<ResponseField name="path" type="string | null">
+  Path to the alternate executable, or `null` if not found
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+const alternatePath = await invoke<string | null>('find_alternate_proxy_exe', {
+  currentExePath: '/home/user/.zerolimit/cli_proxy/CLIProxyAPI',
+  targetVersion: 'plus'
+});
+
+if (alternatePath) {
+  console.log(`Found plus version at: ${alternatePath}`);
+}
+```
+
+**Implementation**: `src-tauri/src/commands/download.rs:10`
+
+---
+
+## Version Management
+
+### check_proxy_version
+
+Checks the current and latest available versions of CLI Proxy.
+
+<ParamField path="api_base" type="string" required>
+  Base URL of the CLI Proxy API (e.g., `http://localhost:25100`)
+</ParamField>
+
+<ParamField path="management_key" type="string" required>
+  Management API authentication key
+</ParamField>
+
+<ResponseField name="current_version" type="string | null">
+  Currently running proxy version from `x-cpa-version` or `x-server-version` header
+</ResponseField>
+
+<ResponseField name="build_date" type="string | null">
+  Build date from `x-cpa-build-date` or `x-server-build-date` header
+</ResponseField>
+
+<ResponseField name="latest_version" type="string | null">
+  Latest available version from the `/v0/management/latest-version` endpoint
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+const versionInfo = await invoke<{
+  current_version: string | null;
+  build_date: string | null;
+  latest_version: string | null;
+}>('check_proxy_version', {
+  apiBase: 'http://localhost:25100',
+  managementKey: 'your-management-key'
+});
+
+console.log(`Current: ${versionInfo.current_version}`);
+console.log(`Latest: ${versionInfo.latest_version}`);
+console.log(`Build: ${versionInfo.build_date}`);
+```
+
+**Implementation**: `src-tauri/src/commands/version.rs:15`
+
+---
+
+## Utility Commands
+
+### open_external_url
+
+Opens a URL in the system default browser.
+
+<ParamField path="url" type="string" required>
+  URL to open in the browser
+</ParamField>
+
+<ResponseField name="result" type="void">
+  Returns nothing on success
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+await invoke('open_external_url', {
+  url: 'https://github.com/zerolimit-ai/zerolimit'
+});
+```
+
+**Implementation**: `src-tauri/src/commands/utils.rs:10`
+
+---
+
+### set_run_in_background
+
+Configures whether the application should minimize to system tray instead of closing.
+
+<ParamField path="enabled" type="boolean" required>
+  `true` to run in background, `false` to quit on window close
+</ParamField>
+
+<ResponseField name="result" type="void">
+  Returns nothing on success
+</ResponseField>
+
+**Example**
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+// Enable background mode
+await invoke('set_run_in_background', { enabled: true });
+```
+
+**Implementation**: `src-tauri/src/commands/utils.rs:16`
+
+---
+
+## Error Handling
+
+All commands return a `Result<T, CommandError>` in Rust. Errors are serialized and thrown as JavaScript exceptions.
+
+**Common error types:**
+- `CommandError::General(String)` - Generic error with message
+- Network errors from `reqwest`
+- File system errors from `std::fs`
+- Process spawn errors
+
+**Example error handling:**
+
+```typescript
+try {
+  await invoke('start_cli_proxy', { exePath: '/invalid/path' });
+} catch (error) {
+  console.error('Failed to start proxy:', error);
+}
+```

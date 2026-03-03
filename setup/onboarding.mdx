@@ -1,0 +1,159 @@
+---
+title: First Launch Onboarding
+description: Complete the setup wizard to configure CLIProxyAPI on first launch
+---
+
+When you launch ZeroLimit for the first time, you'll be guided through an interactive onboarding wizard to configure CLIProxyAPI. This wizard simplifies the setup process and gets you up and running quickly.
+
+## Onboarding Flow
+
+The onboarding wizard consists of 4 steps:
+
+<Steps>
+  <Step title="Welcome Screen">
+    You'll see the ZeroLimit logo with two options:
+    
+    - **Get Started** - Begin the setup wizard
+    - **Skip For Now** - Skip onboarding and connect to a remote server manually
+    
+    <Info>If you plan to connect to a remote HTTPS server, you can skip onboarding and log in manually. See [Remote Server Setup](/setup/remote-server).</Info>
+  </Step>
+
+  <Step title="Choose Setup Mode">
+    Select how you want to set up CLIProxyAPI:
+    
+    <CardGroup cols={2}>
+      <Card title="Auto Download" icon="download" color="#3b82f6">
+        Automatically fetch and configure the latest CLI Proxy executable (recommended)
+      </Card>
+      <Card title="Manual Location" icon="folder-open" color="#f59e0b">
+        Select your own downloaded CLI Proxy executable
+      </Card>
+    </CardGroup>
+    
+    Choose the option that best fits your needs. For most users, **Auto Download** is the easiest path.
+  </Step>
+
+  <Step title="Select Version (Auto Download only)">
+    If you chose Auto Download, select which version to download:
+    
+    <Tabs>
+      <Tab title="Standard">
+        The original CLI Proxy API from [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)
+        
+        **Features:**
+        - Core proxy functionality
+        - Provider management
+        - Standard authentication
+      </Tab>
+      <Tab title="Plus">
+        Enhanced version from [router-for-me/CLIProxyAPIPlus](https://github.com/router-for-me/CLIProxyAPIPlus)
+        
+        **Features:**
+        - All Standard features
+        - GitHub Copilot support
+        - Kiro login integration
+        - Premium enhancements
+      </Tab>
+    </Tabs>
+    
+    ZeroLimit will automatically:
+    - Fetch the latest release from GitHub
+    - Download the correct binary for your OS (Windows, macOS, or Linux)
+    - Extract the executable to your system
+    - Configure the executable path
+    
+    <Note>If Auto Download fails due to network issues or GitHub rate limits, you can fall back to Manual Setup.</Note>
+  </Step>
+
+  <Step title="Set Management Key">
+    Set a secret key to protect your CLIProxy remote management API.
+    
+    **What is the Management Key?**
+    
+    The management key (also called `secret-key` in `config.yaml`) is the authentication credential that ZeroLimit uses to communicate with CLIProxyAPI. It protects the management endpoints from unauthorized access.
+    
+    **During Onboarding:**
+    
+    1. Enter your desired secret key (e.g., `123456` or a stronger password)
+    2. Click **Finish Setup**
+    
+    ZeroLimit will:
+    - Write the key to `config.yaml` (updates the `secret-key` field)
+    - Configure the `auth-dir` path to `~/.cli-proxy-api`
+    - Start the CLI Proxy server automatically
+    - Log you in with the management key at `http://localhost:8317`
+    
+    <Warning>Keep your management key secure. Anyone with this key can access your CLI Proxy management API.</Warning>
+    
+    **Alternative: Skip For Now**
+    
+    You can click **Skip For Now** to complete onboarding without setting up the server. This is useful if:
+    - You want to configure `config.yaml` manually
+    - You're connecting to a remote server
+    - You need to set up the proxy later
+  </Step>
+</Steps>
+
+## After Onboarding
+
+Once you complete the wizard:
+
+- Your CLI Proxy server is running and configured
+- You're automatically logged in to ZeroLimit
+- You can start managing providers and making API calls
+- Your settings are saved and remembered for next launch
+
+## Troubleshooting
+
+### Auto Download Failed
+
+**Symptoms:**
+- Download fails or times out
+- "No compatible package found" error
+
+**Solutions:**
+- Check your internet connection
+- GitHub API may be rate-limited - wait a few minutes and try again
+- Use Manual Setup instead and download the binary yourself from GitHub releases
+
+### Proxy Won't Start After Setup
+
+**Symptoms:**
+- "Proxy failed to start" error after setting management key
+- Connection fails immediately
+
+**Solutions:**
+- Verify the executable path is correct in Settings
+- Check if another instance is already running (look for `cli-proxy-api.exe` in Task Manager)
+- Try running the executable manually to see error messages
+- On Windows, try running as Administrator
+
+### Management Key Not Working
+
+**Symptoms:**
+- Login fails after onboarding
+- "Authentication failed" error
+
+**Solutions:**
+- Navigate to your CLI Proxy directory
+- Open `config.yaml` and verify the `secret-key` value matches what you entered
+- If `config.yaml` doesn't exist, rename `config-example.yaml` to `config.yaml`
+- Restart the CLI Proxy server after updating the config
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Auto Download Setup" icon="download" href="/setup/auto-download">
+    Detailed guide for auto download mode
+  </Card>
+  <Card title="Manual Setup" icon="folder-open" href="/setup/manual-setup">
+    Step-by-step manual configuration
+  </Card>
+  <Card title="Remote Server" icon="globe" href="/setup/remote-server">
+    Connect to a remote HTTPS server
+  </Card>
+  <Card title="Settings" icon="gear" href="/configuration/settings">
+    Configure CLI Proxy options
+  </Card>
+</CardGroup>

@@ -1,0 +1,370 @@
+---
+title: "Multi-Provider Support"
+description: "Connect and manage multiple AI providers from a single interface"
+icon: "layer-group"
+---
+
+## Overview
+
+ZeroLimit supports simultaneous connections to multiple AI service providers, enabling you to manage all your AI quotas, track usage, and switch between accounts seamlessly from one unified dashboard.
+
+## Supported Providers
+
+ZeroLimit integrates with six major AI providers:
+
+<CardGroup cols={2}>
+  <Card title="Antigravity" icon="bolt">
+    Multi-model AI router supporting Claude, GPT, and Gemini models with advanced quota management
+  </Card>
+  <Card title="OpenAI Codex" icon="openai">
+    ChatGPT Plus and Free tier access with model-specific quota tracking
+  </Card>
+  <Card title="Gemini CLI" icon="google">
+    Google AI Studio and Vertex AI with project-based quota buckets
+  </Card>
+  <Card title="Kiro (CodeWhisperer)" icon="aws">
+    AWS AI coding assistant with tiered usage limits
+  </Card>
+  <Card title="GitHub Copilot" icon="github">
+    GitHub's AI pair programmer with subscription-based quotas
+  </Card>
+  <Card title="Claude (Anthropic)" icon="anthropic">
+    Direct Anthropic API access with usage monitoring
+  </Card>
+</CardGroup>
+
+## Provider Details
+
+### Antigravity
+
+**Type**: Multi-model AI router  
+**Authentication**: OAuth  
+**Project ID**: Not required
+
+#### Features
+- Access to Claude Sonnet 4.5, Opus 4.5, thinking models
+- Gemini 3 Pro, Gemini 2.5 Flash, Flash Lite
+- Gemini image models
+- Grouped quota display by model family
+- Average usage calculation across model groups
+
+#### Model Groups
+- **Claude/GPT**: High-tier reasoning models
+- **Gemini 3 Pro**: Premium Google models
+- **Gemini 2.5 Flash**: Fast generation models
+- **Gemini Image**: Visual AI models
+
+<Tip>
+  Antigravity is ideal for users who need access to multiple model families without managing separate subscriptions.
+</Tip>
+
+---
+
+### OpenAI Codex
+
+**Type**: ChatGPT API  
+**Authentication**: OAuth  
+**Project ID**: Not required
+
+#### Features
+- ChatGPT Plus and Free tier support
+- GPT-4, GPT-4 Turbo, o1 models
+- GPT-3.5 Turbo variants
+- Per-model quota limits
+- Plan detection (Plus/Free/Suspended)
+
+#### Quota Display
+- Shows remaining requests or message credits
+- Reset times for each model
+- Plan-specific limits highlighted
+
+<Note>
+  Codex tracks both Plus subscription limits and free tier caps. ZeroLimit automatically detects your plan.
+</Note>
+
+---
+
+### Gemini CLI
+
+**Type**: Google AI Studio / Vertex AI  
+**Authentication**: OAuth with optional Project ID  
+**Project ID**: Optional (auto-detected if omitted)
+
+#### Features
+- Project-based quota buckets
+- Multiple Google Cloud projects supported
+- Per-project quota tracking
+- Bucket-level reset times
+- Model-specific rate limits
+
+#### Use Cases
+- Development projects with separate quotas
+- Multi-tenant applications
+- Testing vs. production environments
+
+<Info>
+  If you have multiple Google Cloud projects, add Gemini CLI connections for each project to track quotas separately.
+</Info>
+
+---
+
+### Kiro (CodeWhisperer)
+
+**Type**: AWS AI coding assistant  
+**Authentication**: OAuth (email or SSO)  
+**Project ID**: Not required
+
+#### Features
+- Individual and Professional tier support
+- Monthly usage quotas
+- IDE integration tracking
+- Plan status monitoring
+
+#### Authentication Methods
+- Email-based OAuth
+- AWS SSO
+- Multiple accounts per user
+
+<Warning>
+  Kiro requires the **CLI Proxy Plus** version. Standard version will show a "Plus Only" badge.
+</Warning>
+
+---
+
+### GitHub Copilot
+
+**Type**: AI pair programmer  
+**Authentication**: GitHub Device Code Flow  
+**Project ID**: Not required
+
+#### Features
+- Subscription-based quota tracking
+- Individual, Business, Enterprise plans
+- Usage statistics across IDEs
+- Real-time availability status
+
+#### Authentication Flow
+1. Click GitHub Copilot provider
+2. Copy the displayed device code
+3. Open GitHub authorization page
+4. Enter code and approve
+5. Connection completes automatically
+
+<Tip>
+  Copilot uses a device code flow for security. The code expires after 15 minutes, so authorize promptly.
+</Tip>
+
+<Warning>
+  GitHub Copilot requires the **CLI Proxy Plus** version.
+</Warning>
+
+---
+
+### Claude (Anthropic)
+
+**Type**: Direct Anthropic API  
+**Authentication**: OAuth  
+**Project ID**: Not required
+
+#### Features
+- Claude 3 Opus, Sonnet, Haiku models
+- Thinking mode variants
+- Token-based quota limits
+- Per-model usage tracking
+- Organization-level quotas for teams
+
+#### Model Tracking
+- Separate quotas for each Claude model version
+- Context window limits monitored
+- Rate limits displayed with reset times
+
+---
+
+## Multiple Accounts per Provider
+
+ZeroLimit allows multiple accounts for the same provider:
+
+<Steps>
+  <Step title="Add First Account">
+    Click the provider card and complete authentication
+  </Step>
+  <Step title="Add Second Account">
+    Click the same provider again and log in with different credentials
+  </Step>
+  <Step title="View All Accounts">
+    Both accounts appear under the provider's collapsible section
+  </Step>
+  <Step title="Monitor Separately">
+    Each account's quotas are tracked independently
+  </Step>
+</Steps>
+
+### Use Cases for Multiple Accounts
+
+- **Personal + Work**: Separate personal and professional subscriptions
+- **Free + Paid**: Keep free tier for testing, paid for production
+- **Backup**: Redundancy when one account hits quota limits
+- **Project-Based**: Different accounts for different clients or projects
+
+<Tip>
+  Use the privacy toggle to mask account emails when switching between personal and work accounts during screen sharing.
+</Tip>
+
+## Provider Comparison
+
+| Provider | OAuth | Plus Only | Project ID | Multi-Account |
+|----------|-------|-----------|------------|---------------|
+| Antigravity | ✅ | ❌ | ❌ | ✅ |
+| OpenAI Codex | ✅ | ❌ | ❌ | ✅ |
+| Gemini CLI | ✅ | ❌ | Optional | ✅ |
+| Kiro | ✅ | ✅ | ❌ | ✅ |
+| GitHub Copilot | ✅ Device Code | ✅ | ❌ | ✅ |
+| Claude | ✅ | ❌ | ❌ | ✅ |
+
+## Cross-Provider Features
+
+### Unified Dashboard
+
+All providers share the same monitoring interface:
+- Consistent quota card design
+- Standardized color coding (green >20%, yellow ≤20%)
+- Reset time display
+- Privacy mode support
+
+### Provider Filtering
+
+Quickly filter by provider:
+1. Click provider tabs at top of Quota page
+2. View only accounts for selected provider
+3. Provider count badge shows number of accounts
+4. Switch instantly between providers
+
+### Bulk Operations
+
+Perform actions across all providers:
+- **Download All**: Export all auth files as ZIP
+- **Copy All Tokens**: Selectively copy refresh tokens by provider
+- **Delete All**: Remove all accounts at once
+
+## Icon System
+
+Each provider has a distinct icon for visual recognition:
+
+- **Antigravity**: Purple gradient logo
+- **Codex**: OpenAI circle logo
+- **Gemini CLI**: Google Gemini sparkle
+- **Kiro**: CodeWhisperer icon
+- **Copilot**: GitHub Copilot logo (auto-inverts in dark mode)
+- **Claude**: Anthropic Claude logo
+
+<Info>
+  Icons automatically adapt to light/dark themes for optimal visibility.
+</Info>
+
+## Quota Aggregation
+
+### Model Grouping
+
+ZeroLimit intelligently groups models by family:
+
+```
+Antigravity Account
+├── Claude/GPT (avg 45%)
+│   ├── claude-sonnet-4-5-thinking
+│   ├── claude-opus-4-5-thinking
+│   └── claude-sonnet-4-5
+├── Gemini 3 Pro (avg 67%)
+│   ├── gemini-3-pro-high
+│   └── gemini-3-pro-low
+└── Gemini 2.5 Flash (avg 82%)
+    ├── gemini-2.5-flash
+    └── gemini-2.5-flash-thinking
+```
+
+### Average Calculation
+
+For each group:
+- Individual model percentages are summed
+- Divided by number of models in group
+- Rounded to nearest integer
+- Displayed with group icon and color coding
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Diversify Providers" icon="chart-network">
+    Connect multiple providers to avoid single points of failure. If one service is down or quota is exhausted, switch to another.
+  </Accordion>
+  
+  <Accordion title="Name Conventions" icon="tag">
+    Use consistent email naming for personal vs. work accounts (e.g., `name+personal@gmail.com` vs. `name+work@gmail.com`).
+  </Accordion>
+  
+  <Accordion title="Monitor Plus-Only Providers" icon="lock">
+    If using Standard CLI Proxy, note which providers require Plus and plan your upgrade accordingly.
+  </Accordion>
+  
+  <Accordion title="Project Organization (Gemini)" icon="folder-tree">
+    For Gemini CLI, use project IDs to separate dev, staging, and production quotas.
+  </Accordion>
+</AccordionGroup>
+
+## Adding New Provider Support
+
+ZeroLimit's architecture supports easy addition of new providers. The CLI Proxy API handles:
+- OAuth endpoints and callback routing
+- Token refresh logic
+- Quota API integration
+- Provider-specific metadata
+
+Future provider additions are planned based on user demand.
+
+## Provider-Specific Quota APIs
+
+Each provider uses a different quota API:
+
+- **Antigravity**: Custom management API with model buckets
+- **Codex**: OpenAI backend API with account credits
+- **Gemini CLI**: Google Cloud quota buckets by project
+- **Kiro**: AWS usage metrics endpoint
+- **Copilot**: GitHub internal usage API
+- **Claude**: Anthropic account dashboard API
+
+ZeroLimit normalizes these into a unified percentage-based display.
+
+## Troubleshooting
+
+### Provider Won't Connect
+
+1. Verify CLI Proxy is running
+2. Check if provider service is operational
+3. Clear browser cache and retry OAuth
+4. Ensure correct version (Standard vs. Plus)
+5. Check firewall allows localhost:8317
+
+### Quota Not Updating
+
+1. Click refresh button on individual provider card
+2. Verify internet connection
+3. Check if account is suspended on provider website
+4. Try deleting and re-adding the account
+5. Review CLI Proxy logs for API errors
+
+### Plus-Only Provider Shows Lock
+
+Switch to CLI Proxy Plus version:
+1. Go to Settings → CLI Proxy
+2. Click **Switch to Plus**
+3. Wait for download and restart
+4. Return to Providers page and connect
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quota Monitoring" icon="chart-line" href="/features/quota-monitoring">
+    Learn how to track and analyze your multi-provider quotas
+  </Card>
+  <Card title="Proxy Management" icon="server" href="/features/proxy-management">
+    Manage the CLI Proxy server and provider connections
+  </Card>
+</CardGroup>

@@ -1,0 +1,331 @@
+---
+title: CLI Proxy Server Configuration
+description: Configure, manage, and update the CLI Proxy API server
+---
+
+## Overview
+
+The CLI Proxy API server is the backend service that powers ZeroLimit. It handles OAuth authentication, provider management, and API routing. This guide covers installation, configuration, updates, and version management.
+
+## Server Configuration
+
+### Executable Path
+
+Specify the location of your CLI Proxy API executable.
+
+**Setting Path:**
+
+1. Go to **Settings** → **CLI Proxy**
+2. Click **Browse** button
+3. Navigate to `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+4. Select the executable
+
+<Tip>
+The executable path is persisted locally. Once configured, ZeroLimit remembers the location across restarts.
+</Tip>
+
+### Auto Start
+
+**Default:** `false`
+
+When enabled, CLI Proxy API server starts automatically when ZeroLimit launches.
+
+**To Enable:**
+
+1. Navigate to **Settings** → **CLI Proxy**
+2. Toggle **Auto Start** switch
+
+<Note>
+Auto start requires a valid executable path to be configured first.
+</Note>
+
+### Run in Background
+
+**Default:** `false`
+
+When enabled, the CLI Proxy API server continues running even when ZeroLimit is closed.
+
+**To Enable:**
+
+1. Go to **Settings** → **CLI Proxy**
+2. Toggle **Run in Background** switch
+
+<Warning>
+When running in background, the server process remains active after closing ZeroLimit. You must manually stop the server from Settings or terminate the process.
+</Warning>
+
+## Server Control
+
+### Starting the Server
+
+**Prerequisites:**
+- Valid executable path configured
+- Server not already running
+
+**Steps:**
+
+1. Navigate to **Settings** → **CLI Proxy**
+2. Click **Start** button
+3. Server status changes to "Running"
+
+### Stopping the Server
+
+1. Go to **Settings** → **CLI Proxy**
+2. Click **Stop** button
+3. Server status changes to "Stopped"
+
+### Server Status
+
+The CLI Proxy section displays real-time server status:
+
+| Status | Indicator | Description |
+|--------|-----------|-------------|
+| **Running** | 🟢 Green checkmark | Server is active and accepting connections |
+| **Stopped** | ⚪ Gray text | Server is not running |
+
+## Version Management
+
+### Current Version Info
+
+ZeroLimit displays the following version details:
+
+- **Version number** (e.g., `v1.2.3`)
+- **Build date** (e.g., `Mar 3, 2026`)
+- **Latest available version** (after update check)
+
+### Checking for Updates
+
+**Manual Update Check:**
+
+1. Navigate to **Settings** → **CLI Proxy**
+2. Click **Check for Update**
+3. ZeroLimit queries GitHub releases for the latest version
+4. If update available, version arrow appears: `v1.2.3 → v1.3.0`
+
+<Note>
+Update checks require:
+- Active internet connection
+- Valid API base and management key
+- Connected to CLI Proxy server
+</Note>
+
+### Updating the Server
+
+When an update is available:
+
+1. Click **Update Now** button
+2. ZeroLimit performs the following automatically:
+   - Stops the running server
+   - Downloads latest release from GitHub
+   - Extracts to the same directory as current executable
+   - Updates the executable path
+   - Restarts the server
+
+**Update Process:**
+
+```
+1. Stop server
+2. Download release from GitHub
+3. Extract to current directory
+4. Update executable path
+5. Start server with new version
+```
+
+<Warning>
+The server is briefly unavailable during updates. Active connections are terminated.
+</Warning>
+
+### Version Detection
+
+ZeroLimit automatically detects which version you're running:
+
+- **Standard:** `cli-proxy-api.exe`
+- **Plus:** `cli-proxy-api-plus.exe`
+
+Detection is based on:
+1. Executable filename (highest priority)
+2. Version string from server API
+3. Stored `cliProxyVersion` preference
+
+## Switching Between Standard and Plus
+
+ZeroLimit supports switching between Standard and Plus versions.
+
+### Version Differences
+
+| Feature | Standard | Plus |
+|---------|----------|------|
+| **Core Providers** | ✅ Antigravity, Codex, Gemini, Anthropic | ✅ All Standard providers |
+| **GitHub Copilot** | ❌ Not available | ✅ Available |
+| **Kiro (CodeWhisperer)** | ❌ Not available | ✅ Available |
+| **Updates** | Standard repo | Plus repo |
+
+### Switching Process
+
+**To Switch Versions:**
+
+1. Go to **Settings** → **CLI Proxy**
+2. Locate **Switch Version** section
+3. Current version is displayed (Standard or Plus)
+4. Click **Switch to Plus** or **Switch to Standard**
+
+**Automated Steps:**
+
+```
+1. Stop running server
+2. Kill any remaining processes
+3. Check for existing alternate version in same directory
+4. If not found, download from GitHub:
+   - Standard: github.com/router-for-me/CLIProxyAPI
+   - Plus: github.com/router-for-me/CLIProxyAPIPlus
+5. Extract to current directory
+6. Update executable path
+7. Restart server
+```
+
+<Tip>
+If you already have both versions in the same directory, switching is instant without downloading.
+</Tip>
+
+## GitHub Release Repositories
+
+ZeroLimit downloads updates and versions from official GitHub repositories:
+
+| Version | Repository |
+|---------|------------|
+| **Standard** | `github.com/router-for-me/CLIProxyAPI` |
+| **Plus** | `github.com/router-for-me/CLIProxyAPIPlus` |
+
+### Platform Detection
+
+ZeroLimit automatically detects your operating system and downloads the correct binary:
+
+| OS | Asset Name Pattern |
+|----|-------------------|
+| **Windows** | `windows_*.zip` |
+| **macOS** | `darwin_*.zip` / `darwin_*.tar.gz` |
+| **Linux** | `linux_*.zip` / `linux_*.tar.gz` |
+
+## Server Health Check
+
+ZeroLimit performs health checks to verify the CLI Proxy API is responding:
+
+**Health Check Endpoint:**  
+`GET {apiBase}/`
+
+**Expected Response:**
+```json
+{
+  "message": "CLI Proxy API Server",
+  "endpoints": [...]
+}
+```
+
+**Health Check Timeout:** 5 seconds
+
+<Warning>
+If health checks fail repeatedly, verify:
+- Server is running
+- Port 8317 is not blocked by firewall
+- No other application is using the same port
+</Warning>
+
+## Server Process Management
+
+ZeroLimit uses Tauri commands to manage the server process:
+
+| Command | Description |
+|---------|-------------|
+| `start_cli_proxy` | Starts server and returns process ID |
+| `stop_cli_proxy` | Stops server gracefully |
+| `is_cli_proxy_running` | Checks if server is currently running |
+| `check_proxy_version` | Queries server version and build date |
+| `download_and_extract_proxy` | Downloads and extracts new version |
+| `find_alternate_proxy_exe` | Locates alternate version in same directory |
+| `set_run_in_background` | Configures background running behavior |
+
+## Persistent Storage
+
+CLI Proxy settings are stored locally:
+
+**Storage Key:** `zerolimit-cli-proxy`
+
+**Persisted Settings:**
+
+```typescript
+{
+  exePath: string | null,
+  autoStart: boolean,
+  runInBackground: boolean,
+  hasCompletedOnboarding: boolean,
+  cliProxyMode: 'auto_download' | 'manual' | null,
+  cliProxyVersion: 'standard' | 'plus' | null,
+  cliProxyLatestVersion: string | null,
+  currentInstalledVersion: string | null,
+  serverBuildDate: string | null,
+  latestRemoteVersion: string | null
+}
+```
+
+## Troubleshooting
+
+### Server Won't Start
+
+**Possible Causes:**
+- Executable path incorrect or file missing
+- Port 8317 already in use
+- Firewall blocking the executable
+- Insufficient permissions
+
+**Solutions:**
+1. Verify executable exists at configured path
+2. Check if another instance is running: `tasklist | findstr cli-proxy-api`
+3. Run ZeroLimit as administrator
+4. Configure firewall to allow cli-proxy-api.exe
+
+### Update Fails
+
+**Possible Causes:**
+- No internet connection
+- GitHub rate limiting
+- Insufficient disk space
+- Server process locked
+
+**Solutions:**
+1. Check internet connectivity
+2. Wait a few minutes and retry
+3. Manually stop server before updating
+4. Free up disk space
+5. Download manually from GitHub releases
+
+### Version Switch Fails
+
+**Possible Causes:**
+- Download interrupted
+- Process still running
+- Permission denied
+
+**Solutions:**
+1. Manually stop server first
+2. Kill process via Task Manager
+3. Check antivirus isn't blocking download
+4. Download manually and use Browse to select executable
+
+### Server Status Shows "Running" But Connection Fails
+
+**Possible Causes:**
+- Server crashed after starting
+- Port conflict
+- API health check failing
+
+**Solutions:**
+1. Stop and restart server
+2. Check logs (enable logging in Settings)
+3. Verify management key is correct
+4. Test manual connection: `curl http://localhost:8317`
+
+## Related Pages
+
+- [Application Settings](/configuration/settings) - General preferences
+- [Provider Configuration](/configuration/providers) - OAuth setup
+- [Managing Proxy](/guides/managing-proxy) - Proxy management guide

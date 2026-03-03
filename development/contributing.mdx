@@ -1,0 +1,403 @@
+---
+title: Contributing Guidelines
+description: How to contribute to ZeroLimit development
+---
+
+## Getting Started
+
+Thank you for considering contributing to ZeroLimit! This guide will help you get started with the development workflow.
+
+### Prerequisites
+
+Before contributing, ensure you have:
+
+1. Read the [Building from Source](/development/building-from-source) guide
+2. Set up your development environment
+3. Familiarized yourself with the [Project Structure](/development/project-structure)
+4. Read this contributing guide thoroughly
+
+## Development Workflow
+
+### 1. Fork and Clone
+
+```bash
+# Fork the repository on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/zero-limit.git
+cd zero-limit
+
+# Add upstream remote
+git remote add upstream https://github.com/0xtbug/zero-limit.git
+```
+
+### 2. Create a Feature Branch
+
+```bash
+# Update your main branch
+git checkout main
+git pull upstream main
+
+# Create a feature branch
+git checkout -b feature/your-feature-name
+```
+
+Branch naming conventions:
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation changes
+- `refactor/` - Code refactoring
+- `chore/` - Maintenance tasks
+
+### 3. Make Your Changes
+
+<Steps>
+  <Step title="Write Code">
+    Follow the [coding style](#coding-style) and [naming conventions](#naming-conventions) outlined below.
+  </Step>
+  <Step title="Test Locally">
+    ```bash
+    # Type check and build frontend
+    pnpm run build
+
+    # Run the full app in development mode
+    pnpm run tauri dev
+    ```
+    Perform manual smoke testing of your changes.
+  </Step>
+  <Step title="Verify Build">
+    Ensure your changes don't break the production build:
+    ```bash
+    pnpm run tauri build
+    ```
+  </Step>
+</Steps>
+
+### 4. Commit Your Changes
+
+ZeroLimit uses **Conventional Commits** for clear, standardized commit messages.
+
+#### Commit Message Format
+
+```
+type(scope): brief description
+
+Optional longer description explaining the "why" of the change.
+```
+
+#### Commit Types
+
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `refactor` - Code refactoring (no functional changes)
+- `style` - Code style/formatting changes
+- `test` - Add or update tests
+- `chore` - Maintenance tasks (dependencies, build, etc.)
+- `perf` - Performance improvements
+
+#### Scope Examples
+
+- `feat(providers)` - Provider-related feature
+- `fix(auth)` - Authentication bug fix
+- `docs(README)` - README update
+- `refactor(dashboard)` - Dashboard code refactoring
+- `chore(deps)` - Dependency update
+
+#### Real Examples from ZeroLimit History
+
+```bash
+# Features
+feat(proxy): add ability to switch between standard and plus versions
+feat(logs): introduce a dedicated logs page for server and error logs
+feat(auth-files): implement download and upload functionality
+feat(onboarding): implement guided CLI proxy setup and update flow
+
+# Fixes
+fix(quota): correct calculation for remaining usage
+
+# Documentation
+docs(github): add issue templates for bug reports and feature requests
+
+# Chores
+chore: bump version to 1.1.3 [skip ci]
+```
+
+#### Commit Best Practices
+
+- **Keep commits focused**: One logical change per commit
+- **Write descriptive messages**: Explain **why**, not just **what**
+- **Use imperative mood**: "add feature" not "added feature"
+- **Reference issues**: Include issue numbers when applicable (e.g., `fixes #123`)
+- **Prefer multiple small commits** over one large commit
+
+### 5. Push and Create Pull Request
+
+```bash
+# Push your branch to your fork
+git push origin feature/your-feature-name
+```
+
+Then open a pull request on GitHub with:
+
+<AccordionGroup>
+  <Accordion title="PR Title">
+    Use the same format as commit messages:
+    ```
+    feat(scope): add new feature
+    ```
+  </Accordion>
+  <Accordion title="PR Description">
+    Include:
+    - **Summary**: Brief overview of changes (1-3 bullet points)
+    - **Motivation**: Why this change is needed
+    - **Testing**: How you tested the changes
+    - **Screenshots**: For UI changes (before/after)
+    - **Related Issues**: Link to any related issues
+  </Accordion>
+</AccordionGroup>
+
+#### Example PR Description
+
+```markdown
+## Summary
+- Adds download and upload functionality for authentication files
+- Implements secure file handling with Tauri's fs plugin
+- Updates UI with new action buttons
+
+## Motivation
+Users requested the ability to back up and restore their authentication tokens across devices.
+
+## Testing
+- Tested download on Windows, macOS, and Linux
+- Verified upload restores authentication state correctly
+- Checked file permissions and security
+
+## Screenshots
+[Before] [After]
+
+Fixes #42
+```
+
+## Coding Style
+
+### General Principles
+
+- **Clarity over cleverness**: Write code that's easy to understand
+- **Consistency**: Follow existing patterns in the codebase
+- **Type safety**: Leverage TypeScript's type system
+- **Documentation**: Add comments for complex logic
+
+### Formatting
+
+**Automated formatting** with Prettier:
+- **Indentation**: 2 spaces (not tabs)
+- **Line endings**: LF (Unix-style)
+- **Encoding**: UTF-8
+- **Semicolons**: No (except where required)
+- **Quotes**: Single quotes for strings
+- **Trailing whitespace**: Trimmed automatically
+- **Final newline**: Required
+
+Configuration files:
+- `.editorconfig` - Editor settings
+- `.prettierrc` - Prettier rules
+- `.prettierignore` - Files to skip
+
+**Format before committing:**
+```bash
+# Format all files
+pnpm prettier --write .
+```
+
+### Naming Conventions
+
+| Element | Convention | Example |
+|---------|-----------|----------|
+| **React Components** | PascalCase | `DashboardPage`, `QuotaCard` |
+| **Hooks** | camelCase with `use` prefix | `useQuotaStore`, `useDashboardPresenter` |
+| **Functions** | camelCase | `fetchQuota`, `calculateUsage` |
+| **Variables** | camelCase | `quotaData`, `isLoading` |
+| **Constants** | UPPER_SNAKE_CASE | `API_BASE_URL`, `MAX_RETRIES` |
+| **Types/Interfaces** | PascalCase | `QuotaData`, `ProviderConfig` |
+| **Files** | Match export | `DashboardPage.tsx`, `quota.store.ts` |
+| **Rust modules** | snake_case | `cli_proxy`, `file_utils` |
+
+### TypeScript Guidelines
+
+- **Prefer interfaces** over type aliases for object shapes
+- **Use explicit types** for function parameters and return values
+- **Avoid `any`**: Use `unknown` or proper types
+- **Enable strict mode**: Already configured in `tsconfig.json`
+
+```typescript
+// Good
+interface QuotaData {
+  used: number
+  limit: number
+}
+
+function calculatePercentage(data: QuotaData): number {
+  return (data.used / data.limit) * 100
+}
+
+// Avoid
+function calculate(data: any) {
+  return (data.used / data.limit) * 100
+}
+```
+
+### React Best Practices
+
+- **Functional components** with hooks (no class components)
+- **Custom hooks** for reusable logic
+- **Presenter pattern** for complex business logic (see `useDashboardPresenter`)
+- **Zustand stores** for global state, not prop drilling
+- **Meaningful component names**: Descriptive and specific
+
+### Rust Guidelines
+
+- **Follow Rust conventions**: `cargo fmt` and `cargo clippy`
+- **Error handling**: Use `Result` and `?` operator
+- **Async functions**: Use `async fn` with Tokio runtime
+- **Tauri commands**: Document parameters and return types
+
+```rust
+// Tauri command example
+#[tauri::command]
+async fn download_file(url: String, path: String) -> Result<(), String> {
+  // Implementation
+  Ok(())
+}
+```
+
+## Testing
+
+### Manual Testing
+
+Currently, ZeroLimit relies on manual testing:
+
+1. **Build check**: Run `pnpm run build` - must succeed without errors
+2. **Development smoke test**: Run `pnpm run tauri dev` and verify:
+   - Application launches successfully
+   - UI renders correctly
+   - Features work as expected
+   - No console errors
+3. **Cross-platform**: Test on Windows, macOS, and Linux if possible
+
+### Future: Automated Tests
+
+If you add automated tests:
+- **Co-locate** tests with the code: `ComponentName.test.tsx`
+- **Naming**: Use `.test.ts(x)` or `.spec.ts(x)` suffix
+- **Coverage**: Focus on critical business logic
+
+## Pull Request Review Process
+
+### What to Expect
+
+1. **Automated checks**: CI/CD workflows will run (if configured)
+2. **Code review**: Maintainers will review your code
+3. **Feedback**: You may be asked to make changes
+4. **Approval**: Once approved, your PR will be merged
+
+### Review Criteria
+
+- **Code quality**: Follows style guidelines and best practices
+- **Functionality**: Works as intended, no regressions
+- **Testing**: Properly tested (manual or automated)
+- **Documentation**: Code is well-documented, user docs updated if needed
+- **Commit history**: Clean, logical commits with good messages
+
+### Addressing Feedback
+
+```bash
+# Make requested changes
+git add .
+git commit -m "refactor(scope): address review feedback"
+git push origin feature/your-feature-name
+```
+
+**Avoid force-pushing** after review unless specifically requested.
+
+## Security Considerations
+
+<Warning>
+  **Never commit sensitive data**:
+  - API keys or tokens
+  - OAuth secrets
+  - Credentials or passwords
+  - Private keys
+</Warning>
+
+- **Review OAuth flows**: Test on all platforms when modifying authentication
+- **Updater changes**: Ensure auto-update mechanism remains secure
+- **File operations**: Validate paths and permissions when touching filesystem code
+- **Dependency updates**: Check for known vulnerabilities
+
+## Communication
+
+### Reporting Issues
+
+Use [GitHub Issues](https://github.com/0xtbug/zero-limit/issues) with the provided templates:
+- **Bug reports**: Include steps to reproduce, expected vs actual behavior, screenshots
+- **Feature requests**: Describe the use case and proposed solution
+
+### Questions and Discussion
+
+- **GitHub Discussions**: For general questions and ideas
+- **Pull Request comments**: For code-specific discussions
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/0xtbug/zero-limit/blob/main/LICENSE).
+
+---
+
+## Quick Reference
+
+### Common Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Development
+pnpm run dev              # Frontend only
+pnpm run tauri dev        # Full desktop app
+
+# Build
+pnpm run build            # Frontend + type check
+pnpm run tauri build      # Production desktop app
+
+# Preview
+pnpm run preview          # Serve built frontend
+
+# Format code
+pnpm prettier --write .
+```
+
+### Commit Template
+
+```
+type(scope): brief description
+
+- Detailed change 1
+- Detailed change 2
+
+Fixes #issue-number
+```
+
+### Before Submitting PR
+
+- [ ] Code follows style guidelines
+- [ ] Ran `pnpm run build` successfully
+- [ ] Tested in `pnpm run tauri dev`
+- [ ] Commit messages follow Conventional Commits
+- [ ] PR description includes summary and testing notes
+- [ ] Screenshots included (for UI changes)
+- [ ] No sensitive data committed
+
+---
+
+<Card title="Need Help?" icon="circle-question">
+  Open an issue or discussion on [GitHub](https://github.com/0xtbug/zero-limit) if you have questions!
+</Card>

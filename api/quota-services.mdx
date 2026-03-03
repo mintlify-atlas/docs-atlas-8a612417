@@ -1,0 +1,523 @@
+---
+title: Quota Services
+description: API services for fetching usage quotas from AI providers
+---
+
+# Quota Services
+
+The quota service provides a unified interface for fetching usage quotas and limits from various AI providers through CLIProxyAPI.
+
+## Overview
+
+All quota methods:
+- Use the generic `/v0/management/api-call` endpoint
+- Require an `authIndex` parameter (references an auth file)
+- Return provider-specific quota models
+- Handle errors gracefully with error messages
+
+**Implementation**: `src/services/api/quota.service.ts`
+
+---
+
+## API Reference
+
+### fetchClaude
+
+Fetches usage quota for Claude (Anthropic).
+
+**Signature**:
+
+```typescript
+fetchClaude(authIndex: string): Promise<ClaudeQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the Claude auth file (e.g., `"0"`, `"1"`)
+</ParamField>
+
+<ResponseField name="models" type="QuotaModel[]">
+  Array of model quotas
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User email associated with the account (optional)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface QuotaModel {
+  name: string;        // Model name
+  percentage: number;  // Usage percentage (0-100)
+  resetTime?: string;  // When quota resets
+  displayValue?: string; // Formatted display value
+}
+
+interface ClaudeQuotaResult {
+  models: QuotaModel[];
+  email?: string;
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+import { quotaApi } from '@/services/api/quota.service';
+
+const result = await quotaApi.fetchClaude('0');
+
+if (result.error) {
+  console.error('Failed to fetch quota:', result.error);
+} else {
+  result.models.forEach(model => {
+    console.log(`${model.name}: ${model.percentage}% used`);
+  });
+}
+```
+
+**Endpoint**: `GET https://api.anthropic.com/v1/usage`
+
+**Implementation**: `src/services/api/quota.service.ts:56`
+
+---
+
+### fetchAntigravity
+
+Fetches usage quota for Antigravity (Mistral/Le Chat).
+
+**Signature**:
+
+```typescript
+fetchAntigravity(authIndex: string): Promise<AntigravityQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the Antigravity auth file
+</ParamField>
+
+<ResponseField name="models" type="QuotaModel[]">
+  Array of model quotas
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface AntigravityQuotaResult {
+  models: QuotaModel[];
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+const result = await quotaApi.fetchAntigravity('0');
+
+if (result.models.length > 0) {
+  console.log('Antigravity models:', result.models);
+}
+```
+
+**Behavior**: Tries multiple quota URLs until one succeeds.
+
+**Implementation**: `src/services/api/quota.service.ts:79`
+
+---
+
+### fetchCodex
+
+Fetches usage quota for OpenAI/ChatGPT (Codex).
+
+**Signature**:
+
+```typescript
+fetchCodex(authIndex: string, accountId?: string): Promise<CodexQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the OpenAI auth file
+</ParamField>
+
+<ParamField path="accountId" type="string">
+  Optional ChatGPT account ID for team/organization accounts
+</ParamField>
+
+<ResponseField name="plan" type="string">
+  Subscription plan name (e.g., "ChatGPT Plus", "ChatGPT Team")
+</ResponseField>
+
+<ResponseField name="limits" type="Array">
+  Array of usage limits with name, percentage, and reset time
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface CodexQuotaResult {
+  plan?: string;
+  limits: Array<{
+    name: string;
+    percentage: number;
+    resetTime?: string;
+  }>;
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+const result = await quotaApi.fetchCodex('0');
+
+console.log('Plan:', result.plan);
+result.limits.forEach(limit => {
+  console.log(`${limit.name}: ${limit.percentage}% used`);
+  if (limit.resetTime) {
+    console.log(`Resets at: ${limit.resetTime}`);
+  }
+});
+
+// With account ID for team accounts
+const teamResult = await quotaApi.fetchCodex('0', 'org-abc123');
+```
+
+**Endpoint**: `GET https://chatgpt.com/backend-api/usage`
+
+**Implementation**: `src/services/api/quota.service.ts:107`
+
+---
+
+### fetchGeminiCli
+
+Fetches usage quota for Google Gemini (CLI/API Key based).
+
+**Signature**:
+
+```typescript
+fetchGeminiCli(authIndex: string, projectId: string): Promise<GeminiCliQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the Gemini API key auth file
+</ParamField>
+
+<ParamField path="projectId" type="string" required>
+  Google Cloud project ID
+</ParamField>
+
+<ResponseField name="buckets" type="Array">
+  Array of quota buckets with model ID, percentage, and reset time
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface GeminiCliQuotaResult {
+  buckets: Array<{
+    modelId: string;
+    percentage: number;
+    resetTime?: string;
+  }>;
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+const result = await quotaApi.fetchGeminiCli('0', 'my-gcp-project');
+
+result.buckets.forEach(bucket => {
+  console.log(`Model ${bucket.modelId}: ${bucket.percentage}% used`);
+});
+```
+
+**Implementation**: `src/services/api/quota.service.ts:131`
+
+---
+
+### fetchKiro
+
+Fetches usage quota for Kiro (DeepSeek/Siliconflow).
+
+**Signature**:
+
+```typescript
+fetchKiro(authIndex: string): Promise<KiroQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the Kiro auth file
+</ParamField>
+
+<ResponseField name="models" type="QuotaModel[]">
+  Array of model quotas
+</ResponseField>
+
+<ResponseField name="plan" type="string">
+  Subscription plan name or "Suspended" if account is suspended
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User email (optional)
+</ResponseField>
+
+<ResponseField name="tokenExpiresAt" type="string">
+  Token expiration timestamp (optional)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface KiroQuotaResult {
+  models: QuotaModel[];
+  plan?: string;
+  email?: string;
+  tokenExpiresAt?: string;
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+const result = await quotaApi.fetchKiro('0');
+
+if (result.plan === 'Suspended') {
+  console.warn('Account is suspended!');
+} else {
+  console.log('Plan:', result.plan);
+  console.log('Models:', result.models);
+}
+```
+
+**Special behavior**: Returns a special suspended state for HTTP 403 with formatted reason.
+
+**Implementation**: `src/services/api/quota.service.ts:151`
+
+---
+
+### fetchCopilot
+
+Fetches entitlement status for GitHub Copilot.
+
+**Signature**:
+
+```typescript
+fetchCopilot(authIndex: string): Promise<CopilotQuotaResult>
+```
+
+<ParamField path="authIndex" type="string" required>
+  Index of the GitHub Copilot auth file
+</ParamField>
+
+<ResponseField name="models" type="QuotaModel[]">
+  Array of available models/features
+</ResponseField>
+
+<ResponseField name="plan" type="string">
+  Subscription plan (e.g., "Copilot Individual", "Copilot Business")
+</ResponseField>
+
+<ResponseField name="username" type="string">
+  GitHub username (optional)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the request failed
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface CopilotQuotaResult {
+  models: QuotaModel[];
+  plan?: string;
+  username?: string;
+  error?: string;
+}
+```
+
+**Example**:
+
+```typescript
+const result = await quotaApi.fetchCopilot('0');
+
+if (result.error) {
+  console.error('No Copilot subscription:', result.error);
+} else {
+  console.log('Plan:', result.plan);
+  console.log('User:', result.username);
+  console.log('Available models:', result.models);
+}
+```
+
+**Endpoint**: `GET https://api.github.com/copilot_internal/v2/token`
+
+**Implementation**: `src/services/api/quota.service.ts:180`
+
+---
+
+## Error Handling
+
+All quota methods handle errors gracefully:
+
+**Common error scenarios**:
+- **401/403**: "Token invalid or expired"
+- **429**: "Rate limit exceeded"
+- **Network errors**: Original error message
+- **Long errors**: Truncated to 100 characters
+
+**Error formatting**:
+
+```typescript
+const result = await quotaApi.fetchClaude('0');
+
+if (result.error) {
+  // Error messages are user-friendly and concise
+  if (result.error.includes('Token invalid')) {
+    // Re-authenticate
+  } else if (result.error.includes('Rate limit')) {
+    // Wait and retry
+  }
+}
+```
+
+**Implementation**: `src/services/api/quota.service.ts:34`
+
+---
+
+## Usage Patterns
+
+### Polling for Updates
+
+```typescript
+const pollQuota = async (authIndex: string) => {
+  const result = await quotaApi.fetchClaude(authIndex);
+  
+  if (!result.error) {
+    updateUI(result.models);
+  }
+  
+  // Poll every 5 minutes
+  setTimeout(() => pollQuota(authIndex), 5 * 60 * 1000);
+};
+```
+
+### Multi-Provider Fetching
+
+```typescript
+const fetchAllQuotas = async (authFiles: AuthFile[]) => {
+  const results = await Promise.allSettled(
+    authFiles.map(file => {
+      const authIndex = file.fileId;
+      
+      switch (file.provider) {
+        case 'claude':
+          return quotaApi.fetchClaude(authIndex);
+        case 'openai':
+          return quotaApi.fetchCodex(authIndex);
+        case 'gemini':
+          return quotaApi.fetchGeminiCli(authIndex, 'project-id');
+        default:
+          return Promise.resolve({ models: [], error: 'Unknown provider' });
+      }
+    })
+  );
+  
+  return results;
+};
+```
+
+### Retry Logic
+
+```typescript
+const fetchWithRetry = async (
+  fetchFn: () => Promise<any>,
+  maxRetries = 3
+) => {
+  for (let i = 0; i < maxRetries; i++) {
+    const result = await fetchFn();
+    
+    if (!result.error || !result.error.includes('Rate limit')) {
+      return result;
+    }
+    
+    // Exponential backoff
+    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+  }
+};
+```
+
+---
+
+## Type Definitions
+
+Full type definitions from `src/types/quota.ts`:
+
+```typescript
+interface QuotaModel {
+  name: string;
+  percentage: number;
+  resetTime?: string;
+  displayValue?: string;
+}
+
+interface AntigravityQuotaResult {
+  models: QuotaModel[];
+  error?: string;
+}
+
+interface ClaudeQuotaResult {
+  models: QuotaModel[];
+  email?: string;
+  error?: string;
+}
+
+interface CodexQuotaResult {
+  plan?: string;
+  limits: Array<{ name: string; percentage: number; resetTime?: string }>;
+  error?: string;
+}
+
+interface GeminiCliQuotaResult {
+  buckets: Array<{ modelId: string; percentage: number; resetTime?: string }>;
+  error?: string;
+}
+
+interface KiroQuotaResult {
+  models: QuotaModel[];
+  plan?: string;
+  email?: string;
+  tokenExpiresAt?: string;
+  error?: string;
+}
+
+interface CopilotQuotaResult {
+  models: QuotaModel[];
+  plan?: string;
+  username?: string;
+  error?: string;
+}
+```

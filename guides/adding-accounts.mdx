@@ -1,0 +1,222 @@
+---
+title: Adding Provider Accounts
+description: Learn how to connect AI provider accounts to ZeroLimit using OAuth authentication
+---
+
+## Overview
+
+ZeroLimit supports multiple AI providers through OAuth authentication. Once connected, your accounts are securely stored and can be used to access provider APIs through the CLI Proxy.
+
+## Supported Providers
+
+ZeroLimit supports the following providers:
+
+- **Antigravity** - OAuth authentication
+- **ChatGPT (Codex)** - OAuth authentication  
+- **Claude** - OAuth authentication
+- **Gemini CLI** - OAuth authentication (requires Google Cloud Project ID)
+- **Kiro** - OAuth authentication (Plus version only)
+- **GitHub Copilot** - Device code authentication (Plus version only)
+
+<Note>
+Providers marked with "Plus version only" require the CLIProxyAPI Plus version to be installed.
+</Note>
+
+## Adding an Account
+
+<Steps>
+
+<Step title="Navigate to Providers page">
+From the main navigation, click on **Providers** to view all available providers and connected accounts.
+</Step>
+
+<Step title="Select a provider">
+Scroll to the **Add Provider** section and click on the provider you want to connect.
+
+The provider card will expand showing authentication options.
+</Step>
+
+<Step title="Configure provider settings (if required)">
+Some providers require additional configuration:
+
+**Gemini CLI** requires a Google Cloud Project ID:
+- Enter your project ID in the input field
+- This field is optional - if left blank, ZeroLimit will auto-select a project
+- Click **Connect with Project** to proceed
+
+**GitHub Copilot** uses device code authentication:
+- A unique code will be displayed on screen
+- You'll need to enter this code on GitHub's website
+</Step>
+
+<Step title="Complete OAuth authentication">
+For most providers, ZeroLimit will:
+
+1. Open the provider's OAuth login page in your default browser
+2. Display a **Open Link** button if the browser doesn't open automatically
+3. Show a loading indicator while waiting for authentication
+
+Complete the login process in your browser:
+- Sign in with your provider credentials
+- Accept the authorization permissions
+- Wait for the redirect
+
+<Tip>
+If automatic detection fails, you can manually paste the callback URL:
+1. Copy the redirect URL from your browser after authentication
+2. Paste it in the "Paste callback URL" field
+3. Click **Verify** to complete the connection
+</Tip>
+</Step>
+
+<Step title="Verify connection">
+Once authenticated, the account will appear in the **Connected Accounts** section with:
+- Provider icon and name
+- Account email or identifier
+- Active status indicator
+- Action buttons (Download, Copy Token, Delete)
+</Step>
+
+</Steps>
+
+## GitHub Copilot Authentication
+
+GitHub Copilot uses a device code flow for authentication:
+
+<Steps>
+
+<Step title="Click on GitHub Copilot provider">
+The provider card expands and generates a unique device code.
+</Step>
+
+<Step title="Copy the device code">
+A large code is displayed (e.g., `ABCD-1234`):
+- Click the copy button next to the code
+- Or manually copy the code
+</Step>
+
+<Step title="Open GitHub device activation">
+Click the **Open Link** button to navigate to GitHub's device activation page.
+</Step>
+
+<Step title="Enter the code on GitHub">
+- Paste the device code when prompted
+- Authorize the application
+- Wait for ZeroLimit to detect the authorization
+</Step>
+
+</Steps>
+
+## Managing Connected Accounts
+
+### View Connected Accounts
+
+All connected accounts are grouped by provider in the **Connected Accounts** section. Each group shows:
+- Provider name and icon
+- Account count badge
+- Expandable list of accounts
+
+Click the provider header to expand/collapse the account list.
+
+### Account Actions
+
+For each connected account, you can:
+
+**Download Authentication File**
+- Click the download icon
+- Saves the account credentials as a file
+- Useful for backup or manual transfer
+
+**Copy Refresh Token**
+- Click the key icon
+- Copies the refresh token to clipboard
+- Can be used for manual API configuration
+
+**Delete Account**
+- Click the trash icon
+- Confirm deletion in the dialog
+- Permanently removes the account from ZeroLimit
+
+### Bulk Operations
+
+**Download All Accounts**
+- Click **Download All** in the header
+- Downloads all connected accounts as individual files
+
+**Copy All Refresh Tokens**
+- Click **Copy All** in the header
+- Select which providers to include
+- Copies all refresh tokens to clipboard in a formatted list
+
+**Upload Authentication File**
+- Click **Upload** in the header
+- Select a previously downloaded auth file
+- Imports the account into ZeroLimit
+
+**Delete All Accounts**
+- Click **Delete All** in the header
+- Confirm the action in the warning dialog
+- Removes all connected accounts permanently
+
+<Warning>
+Deleting accounts is permanent and cannot be undone. You'll need to re-authenticate to restore access.
+</Warning>
+
+## Privacy Mode
+
+ZeroLimit includes a privacy mode to mask sensitive information:
+
+- Click the eye icon in the top-right corner
+- Masks email addresses and account identifiers
+- Useful when sharing your screen or taking screenshots
+
+## Troubleshooting
+
+### OAuth callback not detected
+
+**Problem**: The OAuth flow completes but ZeroLimit doesn't detect it.
+
+**Solution**: 
+1. Copy the final redirect URL from your browser address bar
+2. Paste it in the "Paste callback URL" field in ZeroLimit
+3. Click **Verify** to manually complete authentication
+
+### "Plus" provider not available
+
+**Problem**: Kiro or GitHub Copilot shows a "Plus" badge and can't be added.
+
+**Solution**:
+1. Go to **Settings** page
+2. In the **CLI Proxy Server** section, click **Switch to Plus**
+3. Wait for the download and restart
+4. Return to Providers page - Plus providers will now be available
+
+### Provider shows error after authentication
+
+**Problem**: Account appears connected but shows an error status.
+
+**Solution**:
+1. Delete the problematic account
+2. Clear your browser cookies for the provider's domain
+3. Try authenticating again
+4. If the issue persists, check that your provider account is active and has valid subscription
+
+### Gemini CLI requires project ID
+
+**Problem**: Unsure which Google Cloud project ID to use.
+
+**Solution**:
+- Leave the Project ID field blank and click **Auto Select**
+- ZeroLimit will automatically choose an appropriate project
+- You can also find your project ID in the [Google Cloud Console](https://console.cloud.google.com)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor Usage" icon="chart-line" href="/guides/monitoring-usage">
+    Track quota usage and limits for your connected accounts
+  </Card>
+  <Card title="Manage Proxy" icon="server" href="/guides/managing-proxy">
+    Learn how to start, stop, and configure the CLI Proxy server
+  </Card>
+</CardGroup>

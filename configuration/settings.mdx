@@ -1,0 +1,145 @@
+---
+title: Application Settings
+description: Configure theme, language, and logging preferences for ZeroLimit
+---
+
+## Overview
+
+ZeroLimit provides a variety of application settings to customize your experience, including theme selection, language preferences, usage statistics, and logging options.
+
+## Theme Settings
+
+Customize the visual appearance of ZeroLimit to match your preferences.
+
+### Available Themes
+
+| Theme | Description |
+|-------|-------------|
+| **Light** | Light color scheme for bright environments |
+| **Dark** | Dark color scheme for low-light environments |
+| **System** | Automatically matches your operating system theme |
+
+### Setting Theme
+
+1. Navigate to **Settings** from the main menu
+2. Locate the **Theme** section
+3. Click on your preferred theme option (Light, Dark, or System)
+
+The theme change applies immediately without requiring an application restart.
+
+<Note>
+When **System** theme is selected, ZeroLimit automatically detects and applies your operating system's color scheme preference.
+</Note>
+
+## Language Settings
+
+ZeroLimit supports multiple languages to accommodate users worldwide.
+
+### Supported Languages
+
+| Language | Code | Native Name |
+|----------|------|-------------|
+| English | `en` | English |
+| Chinese (Simplified) | `zh-CN` | 中文 |
+| Indonesian | `id` | Indonesia |
+| Japanese | `ja` | 日本語 |
+| Korean | `ko` | 한국어 |
+| Vietnamese | `vi` | Tiếng Việt |
+| Thai | `th` | ไทย |
+
+### Changing Language
+
+1. Open **Settings**
+2. Find the **Language** section
+3. Click on your preferred language
+
+The interface updates immediately to reflect the selected language.
+
+<Tip>
+ZeroLimit automatically detects your browser or system language on first launch. If your preferred language isn't available, English is used as the default fallback.
+</Tip>
+
+## Usage Statistics
+
+Control whether ZeroLimit collects usage statistics for improving the application.
+
+### Configuration
+
+**Setting:** `usage-statistics-enabled`  
+**Default:** `true`  
+**Type:** Boolean toggle
+
+### Description
+
+When enabled, ZeroLimit tracks usage patterns to help improve the application. This setting communicates with the CLI Proxy API server to enable or disable statistics collection.
+
+### How to Toggle
+
+1. Navigate to **Settings**
+2. Locate **Usage Statistics** section
+3. Toggle the switch to enable or disable
+
+<Warning>
+Changing usage statistics requires an active connection to the CLI Proxy API server.
+</Warning>
+
+## Logging Settings
+
+Configure file-based logging for debugging and troubleshooting.
+
+### Configuration
+
+**Setting:** `logging-to-file`  
+**Default:** `false`  
+**Type:** Boolean toggle
+
+### Description
+
+When enabled, ZeroLimit writes detailed logs to a file on your system. This is useful for:
+
+- Debugging application issues
+- Tracking provider connection problems
+- Monitoring API communication
+- Technical support and troubleshooting
+
+### How to Enable
+
+1. Open **Settings**
+2. Find the **Logging** section  
+3. Toggle **Enable Logging to File**
+
+<Note>
+Logging changes require an active connection to the CLI Proxy API server to take effect.
+</Note>
+
+## Account Management
+
+### Logout
+
+To end your current session:
+
+1. Go to **Settings**
+2. Scroll to the **Account** section
+3. Click **Logout**
+
+This disconnects from the CLI Proxy API server and clears your authentication credentials.
+
+<Warning>
+If you enabled "Remember Me" during login, your credentials are stored locally. Otherwise, you'll need to re-enter your management key on next login.
+</Warning>
+
+## Settings Storage
+
+ZeroLimit stores settings preferences locally using browser storage:
+
+- **Theme preference:** `zerolimit-theme`
+- **Language preference:** `zerolimit-language`
+- **CLI Proxy configuration:** `zerolimit-cli-proxy`
+
+These settings persist across application restarts and are stored on your local machine.
+
+## Related Pages
+
+- [Provider Configuration](/configuration/providers) - Manage OAuth providers
+- [CLI Proxy Settings](/configuration/proxy-settings) - Configure the proxy server
+- [Adding Accounts](/guides/adding-accounts) - OAuth authentication guide

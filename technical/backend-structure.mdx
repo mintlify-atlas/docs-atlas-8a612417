@@ -1,0 +1,769 @@
+---
+title: Backend Structure
+description: Rust and Tauri backend architecture, command handlers, and system integration
+---
+
+# Backend Structure
+
+The ZeroLimit backend is built with Rust and Tauri 2, providing native system integration, process management, and secure IPC communication with the frontend.
+
+## Directory Layout
+
+```
+src-tauri/
+├── src/
+│   ├── commands/           # Tauri command handlers
+│   │   ├── cli_proxy.rs   # CLI proxy lifecycle management
+│   │   ├── download.rs    # Download & extract proxy binaries
+│   │   ├── version.rs     # Version checking
+│   │   ├── utils.rs       # Utility commands
+│   │   └── mod.rs         # Module exports
+│   ├── lib.rs             # Library entry point & app setup
+│   ├── main.rs            # Binary entry point
+│   ├── state.rs           # Global state management
+│   ├── tray.rs            # System tray integration
+│   └── error.rs           # Error types & handling
+│
+├── Cargo.toml             # Rust dependencies
+├── tauri.conf.json        # Tauri configuration
+├── build.rs               # Build script
+└── icons/                 # Application icons
+```
+
+## Core Architecture
+
+### Application Entry Point
+
+#### `main.rs` - Binary Entry
+
+```rust
+// Prevents additional console window on Windows
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+fn main() {
+    zero_limit_lib::run()
+}
+```
+
+#### `lib.rs` - Application Setup
+
+```rust
+mod commands;
+mod error;
+mod state;
+mod tray;
+
+use commands::*;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        // Register plugins
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_os::init())
+        
+        // Setup hooks
+        .setup(|app| {
+            #[cfg(desktop)]
+            {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+            }
+            tray::setup_tray(app)?;
+            Ok(())
+        })
+        
+        // Window event handling
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if state::get_run_in_background() {
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
+            }
+        })
+        
+        // Register IPC commands
+        .invoke_handler(tauri::generate_handler![
+            open_external_url,
+            set_run_in_background,
+            start_cli_proxy,
+            stop_cli_proxy,
+            is_cli_proxy_running,
+            download_and_extract_proxy,
+            find_alternate_proxy_exe,
+            check_proxy_version,
+        ])
+        
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                cleanup_on_exit();
+            }
+        });
+}
+```
+
+### Cleanup Logic
+
+```rust
+fn cleanup_on_exit() {
+    if let Ok(mut guard) = state::CLI_PROXY_PROCESS.lock() {
+        if let Some(ref mut child) = *guard {
+            #[cfg(windows)]
+            {
+                let pid = child.id();
+                let _ = Command::new("taskkill")
+                    .args(["/F", "/T", "/PID", &pid.to_string()])
+                    .creation_flags(CREATE_NO_WINDOW)
+                    .output();
+            }
+            
+            #[cfg(not(windows))]
+            {
+                let _ = child.kill();
+            }
+            
+            let _ = child.wait();
+        }
+        *guard = None;
+    }
+}
+```
+
+## State Management
+
+### `state.rs` - Global State
+
+```rust
+use std::process::Child;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// CLI Proxy process state
+pub static CLI_PROXY_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
+
+/// CLI Proxy executable name (for fallback kill)
+pub static CLI_PROXY_NAME: Mutex<Option<String>> = Mutex::new(None);
+
+/// Run in background setting (hide to tray on close)
+pub static RUN_IN_BACKGROUND: AtomicBool = AtomicBool::new(false);
+
+pub fn get_run_in_background() -> bool {
+    RUN_IN_BACKGROUND.load(Ordering::Relaxed)
+}
+
+pub fn set_run_in_background(enabled: bool) {
+    RUN_IN_BACKGROUND.store(enabled, Ordering::Relaxed);
+}
+```
+
+**Key Design Decisions:**
+- `Mutex<Option<Child>>` - Thread-safe process handle
+- `AtomicBool` - Lock-free boolean flag
+- Static lifetime - Available throughout app lifetime
+
+## Command Handlers
+
+### CLI Proxy Management (`commands/cli_proxy.rs`)
+
+#### Start CLI Proxy
+
+```rust
+#[command]
+pub async fn start_cli_proxy(exe_path: String) -> CommandResult<u32> {
+    let mut guard = CLI_PROXY_PROCESS.lock()
+        .map_err(|e| CommandError::General(e.to_string()))?;
+    
+    // Check if already running
+    if let Some(ref mut child) = *guard {
+        if child.try_wait().ok().flatten().is_none() {
+            return Ok(child.id());
+        }
+        *guard = None;
+    }
+    
+    // Get working directory from exe path
+    let exe = std::path::PathBuf::from(&exe_path);
+    let work_dir = exe.parent()
+        .ok_or_else(|| CommandError::General("Invalid path".into()))?;
+    
+    // Spawn process (platform-specific)
+    #[cfg(windows)]
+    let child = Command::new(&exe_path)
+        .current_dir(work_dir)
+        .creation_flags(CREATE_NO_WINDOW)  // Hide console window
+        .spawn()
+        .map_err(|e| CommandError::General(format!("Failed: {}", e)))?;
+    
+    #[cfg(not(windows))]
+    let child = Command::new(&exe_path)
+        .current_dir(work_dir)
+        .spawn()
+        .map_err(|e| CommandError::General(format!("Failed: {}", e)))?;
+    
+    let pid = child.id();
+    *guard = Some(child);
+    
+    // Store executable name for cleanup
+    if let Ok(mut name_guard) = CLI_PROXY_NAME.lock() {
+        if let Some(name) = exe.file_name().and_then(|n| n.to_str()) {
+            *name_guard = Some(name.to_string());
+        }
+    }
+    
+    Ok(pid)
+}
+```
+
+#### Stop CLI Proxy
+
+```rust
+#[command]
+pub async fn stop_cli_proxy() -> CommandResult<()> {
+    let mut guard = CLI_PROXY_PROCESS.lock()
+        .map_err(|e| CommandError::General(e.to_string()))?;
+    
+    if let Some(ref mut child) = *guard {
+        // Windows: taskkill for reliable termination
+        #[cfg(windows)]
+        {
+            let pid = child.id();
+            let _ = Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output();
+        }
+        
+        // Unix: SIGKILL
+        #[cfg(not(windows))]
+        {
+            let _ = child.kill();
+        }
+        
+        let _ = child.wait();
+    }
+    
+    *guard = None;
+    
+    // Fallback: kill by name if available
+    if let Ok(mut name_guard) = CLI_PROXY_NAME.lock() {
+        if let Some(ref name) = *name_guard {
+            if name.to_lowercase().contains("cliproxy") {
+                #[cfg(windows)]
+                {
+                    let _ = Command::new("taskkill")
+                        .args(["/F", "/T", "/IM", name])
+                        .creation_flags(CREATE_NO_WINDOW)
+                        .output();
+                }
+                
+                #[cfg(not(windows))]
+                {
+                    let _ = Command::new("pkill")
+                        .args(["-f", name])
+                        .output();
+                }
+            }
+        }
+        *name_guard = None;
+    }
+    
+    Ok(())
+}
+```
+
+#### Check Running Status
+
+```rust
+#[command]
+pub async fn is_cli_proxy_running() -> CommandResult<bool> {
+    let mut guard = CLI_PROXY_PROCESS.lock()
+        .map_err(|e| CommandError::General(e.to_string()))?;
+    
+    if let Some(ref mut child) = *guard {
+        // Check if process is still alive
+        if child.try_wait().ok().flatten().is_none() {
+            return Ok(true);
+        }
+        *guard = None;
+    }
+    
+    Ok(false)
+}
+```
+
+### Download Handler (`commands/download.rs`)
+
+Handles downloading and extracting CLI proxy binaries:
+
+```rust
+#[command]
+pub async fn download_and_extract_proxy(
+    url: String, 
+    dest_dir: String
+) -> CommandResult<String> {
+    // Download binary
+    let response = reqwest::get(&url).await
+        .map_err(|e| CommandError::General(format!("Download failed: {}", e)))?;
+    
+    let bytes = response.bytes().await
+        .map_err(|e| CommandError::General(format!("Read failed: {}", e)))?;
+    
+    // Extract archive (zip for Windows, tar.gz for Unix)
+    if url.ends_with(".zip") {
+        extract_zip(&bytes, &dest_dir)?;
+    } else if url.ends_with(".tar.gz") {
+        extract_tar_gz(&bytes, &dest_dir)?;
+    }
+    
+    Ok(dest_dir)
+}
+
+fn extract_zip(data: &[u8], dest: &str) -> Result<(), CommandError> {
+    let reader = std::io::Cursor::new(data);
+    let mut archive = zip::ZipArchive::new(reader)
+        .map_err(|e| CommandError::General(format!("Invalid zip: {}", e)))?;
+    
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)
+            .map_err(|e| CommandError::General(format!("Extract error: {}", e)))?;
+        
+        let outpath = Path::new(dest).join(file.name());
+        
+        if file.is_dir() {
+            std::fs::create_dir_all(&outpath)?;
+        } else {
+            if let Some(parent) = outpath.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let mut outfile = std::fs::File::create(&outpath)?;
+            std::io::copy(&mut file, &mut outfile)?;
+        }
+    }
+    
+    Ok(())
+}
+```
+
+### Version Checker (`commands/version.rs`)
+
+```rust
+#[command]
+pub async fn check_proxy_version(exe_path: String) -> CommandResult<String> {
+    let output = Command::new(&exe_path)
+        .arg("--version")
+        .output()
+        .map_err(|e| CommandError::General(format!("Failed to run: {}", e)))?;
+    
+    let version = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .to_string();
+    
+    Ok(version)
+}
+```
+
+### Utility Commands (`commands/utils.rs`)
+
+```rust
+#[command]
+pub async fn open_external_url(url: String) -> CommandResult<()> {
+    opener::open(&url)
+        .map_err(|e| CommandError::General(format!("Failed to open URL: {}", e)))?;
+    Ok(())
+}
+
+#[command]
+pub async fn set_run_in_background(enabled: bool) -> CommandResult<()> {
+    state::set_run_in_background(enabled);
+    Ok(())
+}
+
+#[command]
+pub async fn find_alternate_proxy_exe(dir: String) -> CommandResult<Option<String>> {
+    let path = Path::new(&dir);
+    
+    let extensions = if cfg!(windows) { vec!["exe"] } else { vec![""] };
+    
+    for entry in std::fs::read_dir(path)? {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        
+        if let Some(name) = file_name.to_str() {
+            if name.to_lowercase().contains("proxy") {
+                return Ok(Some(entry.path().to_string_lossy().to_string()));
+            }
+        }
+    }
+    
+    Ok(None)
+}
+```
+
+## System Tray Integration
+
+### `tray.rs` - System Tray
+
+```rust
+use tauri::{
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    menu::{Menu, MenuItem},
+    Manager, Runtime,
+};
+
+pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
+    // Create menu items
+    let show = MenuItem::with_id(app, "show", "Open ZeroLimit", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    
+    // Build menu
+    let menu = Menu::with_items(app, &[&show, &quit])?;
+    
+    // Build tray icon
+    let _tray = TrayIconBuilder::new()
+        .icon(app.default_window_icon().unwrap().clone())
+        .menu(&menu)
+        .tooltip("ZeroLimit - API Quota Manager")
+        
+        // Menu item click handler
+        .on_menu_event(|app, event| {
+            match event.id.as_ref() {
+                "show" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                }
+                "quit" => {
+                    app.exit(0);
+                }
+                _ => {}
+            }
+        })
+        
+        // Tray icon click handler
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { 
+                button: MouseButton::Left, 
+                button_state: MouseButtonState::Up, 
+                .. 
+            } = event {
+                if let Some(window) = tray.app_handle().get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+        })
+        .build(app)?;
+    
+    Ok(())
+}
+```
+
+## Error Handling
+
+### `error.rs` - Error Types
+
+```rust
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CommandError {
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+    
+    #[error("Network error: {0}")]
+    Network(#[from] reqwest::Error),
+    
+    #[error("{0}")]
+    General(String),
+}
+
+impl serde::Serialize for CommandError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+pub type CommandResult<T> = Result<T, CommandError>;
+```
+
+**Benefits:**
+- Type-safe error handling with `thiserror`
+- Automatic serialization to JSON for IPC
+- Proper error propagation with `?` operator
+
+## Dependencies
+
+### `Cargo.toml`
+
+```toml
+[package]
+name = "zero-limit"
+version = "1.1.3"
+edition = "2021"
+
+[lib]
+name = "zero_limit_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+tauri-plugin-os = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "multipart"] }
+tokio = { version = "1", features = ["full"] }
+thiserror = "1"
+opener = "0.7"
+zip = "8.1.0"
+tar = "0.4.44"
+flate2 = "1.1.9"
+dirs = "6.0.0"
+```
+
+### Key Dependencies Explained
+
+| Crate | Purpose |
+|-------|--------|
+| `tauri` | Core framework with tray icon support |
+| `tauri-plugin-*` | Official Tauri plugins for system APIs |
+| `serde` | Serialization for IPC communication |
+| `reqwest` | HTTP client for downloads |
+| `tokio` | Async runtime |
+| `thiserror` | Ergonomic error handling |
+| `opener` | Open URLs in default browser |
+| `zip` / `tar` / `flate2` | Archive extraction |
+| `dirs` | Platform-specific directories |
+
+## Platform-Specific Code
+
+### Windows-Specific
+
+```rust
+#[cfg(windows)]
+{
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    
+    let child = Command::new(&exe_path)
+        .creation_flags(CREATE_NO_WINDOW)  // Hide console
+        .spawn()?;
+    
+    // Terminate with taskkill
+    Command::new("taskkill")
+        .args(["/F", "/T", "/PID", &pid.to_string()])
+        .output();
+}
+```
+
+### Unix-Specific
+
+```rust
+#[cfg(not(windows))]
+{
+    let child = Command::new(&exe_path).spawn()?;
+    
+    // Terminate with SIGKILL
+    let _ = child.kill();
+    
+    // Fallback: pkill by name
+    Command::new("pkill")
+        .args(["-f", process_name])
+        .output();
+}
+```
+
+## Tauri Configuration
+
+### `tauri.conf.json`
+
+```json
+{
+  "productName": "ZeroLimit",
+  "version": "1.1.3",
+  "identifier": "com.0xtbug.zero-limit",
+  
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  
+  "app": {
+    "windows": [
+      {
+        "title": "ZeroLimit",
+        "width": 800,
+        "height": 400,
+        "minWidth": 1024,
+        "minHeight": 700
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  
+  "plugins": {
+    "updater": {
+      "pubkey": "...",
+      "endpoints": [
+        "https://github.com/0xtbug/zero-limit/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
+```
+
+## Build Process
+
+### Development Build
+
+```bash
+pnpm run tauri dev
+```
+
+**Steps:**
+1. Run `pnpm dev` (Vite dev server)
+2. Compile Rust with dev profile
+3. Launch Tauri window with WebView
+4. Enable hot reload for frontend
+
+### Production Build
+
+```bash
+pnpm run tauri build
+```
+
+**Steps:**
+1. Run `pnpm build` (TypeScript check + Vite build)
+2. Compile Rust with release profile (`--release`)
+3. Bundle application with platform-specific installer
+4. Generate updater artifacts (signed)
+
+### Output Artifacts
+
+```
+src-tauri/target/release/
+├── bundle/
+│   ├── msi/              # Windows installer
+│   ├── dmg/              # macOS disk image
+│   ├── deb/              # Debian package
+│   ├── appimage/         # Linux AppImage
+│   └── nsis/             # NSIS installer
+└── zero-limit.exe        # Executable
+```
+
+## Security Considerations
+
+### 1. IPC Allowlist
+Only registered commands are accessible:
+```rust
+.invoke_handler(tauri::generate_handler![
+    start_cli_proxy,
+    stop_cli_proxy,
+    // ... explicit command list
+])
+```
+
+### 2. Process Isolation
+- Frontend runs in sandboxed WebView
+- Backend has full system access
+- Communication only through Tauri IPC
+
+### 3. Command Validation
+```rust
+pub async fn start_cli_proxy(exe_path: String) -> CommandResult<u32> {
+    let exe = std::path::PathBuf::from(&exe_path);
+    let work_dir = exe.parent()
+        .ok_or_else(|| CommandError::General("Invalid path".into()))?;
+    // Validate path before executing
+}
+```
+
+### 4. Error Sanitization
+```rust
+.map_err(|e| CommandError::General(format!("Failed: {}", e)))?;
+// Generic error messages to avoid leaking system details
+```
+
+## Testing Strategy
+
+### Manual Testing
+```bash
+# Build and test
+pnpm run build
+pnpm run tauri dev
+
+# Test specific commands
+tauri dev --features cli-commands
+```
+
+### Platform Testing
+- Windows: Test `taskkill` fallback
+- macOS: Test tray icon behavior
+- Linux: Test `pkill` with different shells
+
+## Performance Optimizations
+
+### 1. Release Profile (`Cargo.toml`)
+```toml
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+```
+
+### 2. Async I/O
+```rust
+#[command]
+pub async fn download_and_extract_proxy(...) -> CommandResult<String> {
+    // Non-blocking HTTP with tokio
+    let bytes = reqwest::get(&url).await?.bytes().await?;
+}
+```
+
+### 3. Lazy Loading
+```rust
+// Only load updater plugin on desktop
+#[cfg(desktop)]
+{
+    app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+}
+```
+
+## Next Steps
+
+- [Architecture Overview](/technical/architecture-overview) - Overall system architecture
+- [Frontend Structure](/technical/frontend-structure) - React frontend details

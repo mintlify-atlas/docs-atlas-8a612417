@@ -1,0 +1,376 @@
+---
+title: Manual Location Setup
+description: Configure ZeroLimit with your own downloaded CLI Proxy executable
+---
+
+Manual Setup lets you use a CLI Proxy executable that you've downloaded yourself. This is useful when:
+
+- Auto Download fails or is blocked by your network
+- You need a specific version that isn't the latest
+- You prefer to manage downloads manually
+- You already have CLI Proxy downloaded from a previous installation
+
+## Prerequisites
+
+Before starting manual setup, download the CLI Proxy executable for your operating system:
+
+<Tabs>
+  <Tab title="Standard Version">
+    **Repository**: [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)
+    
+    **Download**: [Latest Release](https://github.com/router-for-me/CLIProxyAPI/releases)
+    
+    Choose the asset for your platform:
+    - Windows: `cli-proxy-api_windows_x64.zip`
+    - macOS (Intel): `cli-proxy-api_darwin_x64.tar.gz`
+    - macOS (Apple Silicon): `cli-proxy-api_darwin_arm64.tar.gz`
+    - Linux: `cli-proxy-api_linux_x64.tar.gz`
+  </Tab>
+  <Tab title="Plus Version">
+    **Repository**: [router-for-me/CLIProxyAPIPlus](https://github.com/router-for-me/CLIProxyAPIPlus)
+    
+    **Download**: [Latest Release](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+    
+    Choose the asset for your platform:
+    - Windows: `cli-proxy-api-plus_windows_x64.zip`
+    - macOS (Intel): `cli-proxy-api-plus_darwin_x64.tar.gz`
+    - macOS (Apple Silicon): `cli-proxy-api-plus_darwin_arm64.tar.gz`
+    - Linux: `cli-proxy-api-plus_linux_x64.tar.gz`
+    
+    **Plus Features**:
+    - GitHub Copilot support
+    - Kiro login integration
+    - Premium enhancements
+  </Tab>
+</Tabs>
+
+**Extract the Archive**:
+- Windows: Right-click the `.zip` file and select "Extract All"
+- macOS/Linux: `tar -xzf <filename>.tar.gz`
+
+## Setup Steps
+
+<Steps>
+  <Step title="Launch Onboarding">
+    On first launch, click **Get Started** on the welcome screen.
+  </Step>
+
+  <Step title="Select Manual Location">
+    Choose **Manual Location** from the setup mode options.
+    
+    This option shows an amber folder icon and the description "Select your own downloaded CLI Proxy executable."
+    
+    A file browser dialog will open immediately.
+  </Step>
+
+  <Step title="Browse for Executable">
+    Navigate to where you extracted the CLI Proxy files and select the executable:
+    
+    **Windows:**
+    - File: `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+    - Filter: Executable files (*.exe)
+    
+    **macOS/Linux:**
+    - File: `cli-proxy-api` or `cli-proxy-api-plus`
+    - Make sure it has execute permissions: `chmod +x cli-proxy-api`
+    
+    <Info>The file browser uses the native OS file picker, so the interface will match your operating system's style.</Info>
+    
+    After selecting the file, ZeroLimit will:
+    - Store the executable path in settings
+    - Set CLI Proxy mode to "manual"
+    - Skip the version selection step (proceeds directly to management key)
+  </Step>
+
+  <Step title="Set Management Key">
+    Enter a secret key to protect your CLI Proxy management API.
+    
+    **What to enter:**
+    
+    <Tabs>
+      <Tab title="New Installation">
+        If this is your first time setting up CLI Proxy:
+        
+        1. Enter your desired secret key (e.g., `my-secure-password`)
+        2. Click **Finish Setup**
+        
+        ZeroLimit will:
+        - Create or update `config.yaml` in the same directory as the executable
+        - Write your management key to the `secret-key` field
+        - Configure the `auth-dir` path
+        - Start the CLI Proxy server
+        - Log you in automatically
+      </Tab>
+      <Tab title="Existing Installation">
+        If you already have CLI Proxy configured:
+        
+        1. Find your existing `config.yaml` in the CLI Proxy directory
+        2. Open it and locate the `secret-key` value:
+           ```yaml
+           secret-key: "your-existing-key-here"
+           ```
+        3. Enter that **exact same key** in the onboarding wizard
+        4. Click **Finish Setup**
+        
+        ZeroLimit will use your existing configuration and log you in with the saved key.
+      </Tab>
+    </Tabs>
+    
+    <Warning>The management key in ZeroLimit must match the `secret-key` in `config.yaml`, or authentication will fail.</Warning>
+  </Step>
+
+  <Step title="Complete Setup">
+    ZeroLimit automatically:
+    
+    1. **Updates config.yaml** (if needed):
+       - Located in the same directory as the executable
+       - Reads `config.example.yaml` if `config.yaml` doesn't exist
+       - Writes or updates the `secret-key` field
+       - Configures `auth-dir` to `~/.cli-proxy-api`
+    
+    2. **Starts the server**:
+       - Invokes the executable at the path you selected
+       - Waits for server startup
+       - Checks API health
+    
+    3. **Logs you in**:
+       - API Base: `http://localhost:8317`
+       - Management Key: The key you entered
+       - Remember Credentials: Enabled
+    
+    Success message: "CLI Proxy configuration complete!"
+  </Step>
+</Steps>
+
+## File Structure
+
+After manual setup, your CLI Proxy directory should look like:
+
+```
+<your-chosen-location>/
+├── cli-proxy-api(.exe)       # Executable you selected
+├── config.yaml               # Configuration file (created/updated)
+└── config.example.yaml       # Template (if included in release)
+```
+
+**config.yaml example:**
+```yaml
+# CLI Proxy API Configuration
+
+secret-key: "your-management-key"  # Must match ZeroLimit login
+auth-dir: "C:\\Users\\YourName\\.cli-proxy-api"  # Windows
+# auth-dir: "/home/username/.cli-proxy-api"  # Linux/macOS
+
+server:
+  host: 0.0.0.0
+  port: 8317
+
+# ... other configuration options
+```
+
+## Configuration Process
+
+The `handleSetupKey` function in `OnboardingFlow.tsx:113-154` performs these operations:
+
+1. **Read existing config**:
+   ```typescript
+   const proxyDir = await dirname(exePath);
+   const configPath = await join(proxyDir, 'config.yaml');
+   const exampleConfigPath = await join(proxyDir, 'config.example.yaml');
+   
+   // Try config.yaml first, fall back to config.example.yaml
+   let configContent = '';
+   try {
+     configContent = await readTextFile(configPath);
+   } catch {
+     configContent = await readTextFile(exampleConfigPath);
+   }
+   ```
+
+2. **Update secret-key**:
+   ```typescript
+   // Replace existing secret-key lines
+   configContent = configContent.replace(
+     /secret-key:\s*["'][^"']*["']/,
+     `secret-key: "${managementKey}"`
+   );
+   configContent = configContent.replace(
+     /secret-key:\s*$/m,
+     `secret-key: "${managementKey}"`
+   );
+   ```
+
+3. **Update auth-dir**:
+   ```typescript
+   const homePath = await homeDir();
+   const authDir = `${homePath}\\.cli-proxy-api`.replace(/\\\\/g, '\\');
+   configContent = configContent.replace(
+     /auth-dir:\s*.*$/,
+     `auth-dir: "${authDir}"`
+   );
+   ```
+
+4. **Write and start**:
+   ```typescript
+   await writeTextFile(configPath, configContent);
+   const started = await startServer();
+   ```
+
+## Troubleshooting
+
+### File Browser Cancellation
+
+**Symptom**: File browser closes without selecting a file
+
+**Behavior**: You remain on the mode selection screen (step 2)
+
+**Solution**: Click **Manual Location** again to reopen the file browser
+
+### Selected Wrong File
+
+**Symptom**: Selected a non-executable file or wrong version
+
+**Solutions:**
+1. Go to Settings > CLI Proxy Server
+2. Click **Browse** to select the correct executable
+3. Restart ZeroLimit if needed
+
+### Login Failed After Setup
+
+**Error**: "Authentication failed" after completing setup
+
+**Causes:**
+- Management key doesn't match `secret-key` in `config.yaml`
+- `config.yaml` wasn't created or updated properly
+- CLI Proxy server didn't start
+
+**Solutions:**
+
+1. **Verify config.yaml**:
+   ```yaml
+   # Should contain:
+   secret-key: "the-exact-key-you-entered"
+   ```
+
+2. **Check if server is running**:
+   - Windows: Open Task Manager, look for `cli-proxy-api.exe`
+   - macOS/Linux: `ps aux | grep cli-proxy-api`
+
+3. **Manually start the server**:
+   ```bash
+   # Navigate to CLI Proxy directory
+   cd /path/to/cli-proxy
+   
+   # Windows
+   .\cli-proxy-api.exe
+   
+   # macOS/Linux
+   ./cli-proxy-api
+   ```
+   
+   Watch for error messages in the console output
+
+4. **Verify config.yaml location**:
+   - Must be in the **same directory** as the executable
+   - Filename must be exactly `config.yaml` (case-sensitive on Linux/macOS)
+
+### Server Won't Start
+
+**Symptoms:**
+- "Proxy failed to start" error
+- Health check fails
+- Port conflict errors
+
+**Solutions:**
+
+1. **Check port availability**:
+   - Default port: 8317
+   - Check if another service is using it:
+     ```bash
+     # Windows
+     netstat -ano | findstr :8317
+     
+     # macOS/Linux
+     lsof -i :8317
+     ```
+
+2. **Run executable manually** to see detailed errors:
+   ```bash
+   cd /path/to/cli-proxy
+   ./cli-proxy-api  # or cli-proxy-api.exe on Windows
+   ```
+
+3. **Check permissions**:
+   - macOS/Linux: `chmod +x cli-proxy-api`
+   - Windows: Right-click > Properties > Unblock (if file came from internet)
+
+4. **Try as administrator/root**:
+   - Windows: Run ZeroLimit as Administrator
+   - Linux: `sudo ./cli-proxy-api` (not recommended for production)
+
+### config.yaml Not Found
+
+**Error**: Cannot read config.yaml or config.example.yaml
+
+**Causes:**
+- Downloaded executable without accompanying files
+- Files extracted to different locations
+
+**Solutions:**
+
+1. **Download complete release**:
+   - Releases should include `config.example.yaml`
+   - Don't download just the executable binary
+
+2. **Create config.yaml manually**:
+   ```yaml
+   secret-key: "your-management-key"
+   auth-dir: "/path/to/.cli-proxy-api"
+   
+   server:
+     host: 0.0.0.0
+     port: 8317
+   
+   log:
+     level: info
+   ```
+   
+   Save as `config.yaml` in the same directory as the executable
+
+## After Setup
+
+Once manual setup is complete:
+
+- Your executable path is saved in ZeroLimit settings
+- CLI Proxy server is running on `http://localhost:8317`
+- You're logged in and ready to configure providers
+
+<CardGroup cols={2}>
+  <Card title="Provider Setup" icon="plug" href="/configuration/providers">
+    Add and configure API providers
+  </Card>
+  <Card title="Server Settings" icon="gear" href="/configuration/proxy-settings">
+    Manage executable path and auto-start
+  </Card>
+  <Card title="Auto Updates" icon="arrow-up" href="/features/auto-updates">
+    Manually update to newer versions
+  </Card>
+  <Card title="Remote Server" icon="globe" href="/setup/remote-server">
+    Connect to a remote deployment instead
+  </Card>
+</CardGroup>
+
+## Changing Executable Path
+
+To update the CLI Proxy executable path after initial setup:
+
+1. Open ZeroLimit Settings
+2. Navigate to **CLI Proxy Server**
+3. Click **Browse** next to "Executable Path"
+4. Select the new executable location
+5. Restart the server for changes to take effect
+
+This is useful when:
+- Upgrading to a new version
+- Moving files to a different directory
+- Switching between Standard and Plus versions

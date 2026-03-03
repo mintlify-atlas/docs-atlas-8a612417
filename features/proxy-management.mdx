@@ -1,0 +1,338 @@
+---
+title: "Proxy Management"
+description: "Manage your CLI Proxy server and AI provider connections with one-click control"
+icon: "server"
+---
+
+## Overview
+
+ZeroLimit's Proxy Management system provides centralized control over your CLI Proxy API server and all connected AI provider accounts. Start, stop, and configure the proxy server, then manage authentication for multiple AI services from a single interface.
+
+<Frame>
+  <img src="/images/proxy-management.png" alt="Proxy Management Interface" />
+</Frame>
+
+## CLI Proxy Server Control
+
+### What is the CLI Proxy?
+
+The CLI Proxy API is the backend server that:
+- Intercepts and routes AI API requests
+- Manages authentication tokens for multiple providers
+- Tracks quota usage across accounts
+- Provides a unified management interface
+
+ZeroLimit desktop app acts as a graphical control center for the CLI Proxy.
+
+### Starting the Server
+
+<Steps>
+  <Step title="Configure Executable Path">
+    Go to **Settings** → **CLI Proxy** and browse for your `cli-proxy-api.exe` or `cli-proxy-api-plus.exe` file
+  </Step>
+  <Step title="Start the Server">
+    Click the **Start** button in Settings or ensure **Auto Start** is enabled
+  </Step>
+  <Step title="Verify Status">
+    Look for the green "Running" status indicator with a checkmark icon
+  </Step>
+</Steps>
+
+<Info>
+  Enable **Auto Start** in Settings to automatically launch the CLI Proxy when ZeroLimit starts.
+</Info>
+
+### Stopping the Server
+
+Click the **Stop** button in the CLI Proxy settings section to gracefully shut down the server. This will:
+- Terminate the running server process
+- Close all active connections
+- Preserve your configuration for next start
+
+### Run in Background
+
+Enable **Run in Background** to allow the CLI Proxy to continue running even when you close the ZeroLimit window. Perfect for:
+- Continuous monitoring
+- System tray operation
+- Minimizing disruption to workflows
+
+## Provider Account Management
+
+### Viewing Connected Accounts
+
+The **Providers** page displays all your connected AI service accounts:
+
+- Grouped by provider (Antigravity, Codex, Gemini, etc.)
+- Expandable/collapsible sections
+- Account count badges
+- Provider icons for quick identification
+
+<Tip>
+  Use the expand/collapse arrows to focus on specific providers and reduce clutter.
+</Tip>
+
+### Adding New Providers
+
+ZeroLimit supports OAuth-based authentication for multiple AI providers:
+
+<Tabs>
+  <Tab title="Standard Providers">
+    For most providers (Antigravity, Codex, Anthropic, Kiro, Copilot):
+    
+    1. Click on the provider card in the "Add Provider" section
+    2. An authentication window will open in your browser
+    3. Log in with your provider credentials
+    4. Approve the connection
+    5. The callback is automatically captured
+    6. Account appears in your Connected Accounts list
+  </Tab>
+  
+  <Tab title="Gemini CLI (Requires Project ID)">
+    For Gemini CLI:
+    
+    1. Click the **Gemini CLI** card
+    2. (Optional) Enter your Google Cloud Project ID
+    3. Click **Connect with Project** or **Auto Select**
+    4. Complete OAuth flow in browser
+    5. Project-specific quotas will be tracked
+    
+    <Note>
+      Project ID is optional. If omitted, ZeroLimit will auto-detect your default project.
+    </Note>
+  </Tab>
+  
+  <Tab title="GitHub Copilot Device Code">
+    For GitHub Copilot:
+    
+    1. Click the **GitHub Copilot** card
+    2. A unique device code appears (e.g., `A1B2-C3D4`)
+    3. Click **Copy** to copy the code
+    4. Click **Open Link** to go to GitHub
+    5. Paste the code and authorize
+    6. ZeroLimit polls for completion automatically
+  </Tab>
+</Tabs>
+
+### Manual Callback (Fallback)
+
+If automatic callback capture fails:
+
+1. During authentication, copy the final callback URL from your browser
+2. Paste it into the "Manual Callback" input field
+3. Click **Verify** to complete the connection
+
+<Warning>
+  The callback URL should start with `http://localhost` or your configured redirect URI.
+</Warning>
+
+## Managing Existing Accounts
+
+### Account Actions
+
+Each connected account has three action buttons:
+
+<CardGroup cols={3}>
+  <Card title="Download" icon="download">
+    Export the authentication file (JSON) for backup or transfer
+  </Card>
+  <Card title="Copy Refresh Token" icon="key">
+    Copy the refresh token to clipboard for manual use or CLI integration
+  </Card>
+  <Card title="Delete" icon="trash">
+    Remove the account connection (with confirmation dialog)
+  </Card>
+</CardGroup>
+
+### Bulk Operations
+
+#### Download All
+
+Click **Download All** to export all authentication files as a ZIP archive. Useful for:
+- Backing up your accounts
+- Migrating to a new machine
+- Sharing credentials across team members (carefully!)
+
+#### Copy All Refresh Tokens
+
+1. Click **Copy All**
+2. Select which providers to include in the modal
+3. Click **Copy** to copy all selected refresh tokens
+4. Tokens are formatted as a JSON object ready for CLI use
+
+#### Upload Authentication Files
+
+1. Click **Upload**
+2. Select a `.json` authentication file from your computer
+3. The account is added to your connected accounts
+4. Useful for restoring backups or importing from CLI Proxy
+
+#### Delete All Accounts
+
+<Warning>
+  This action cannot be undone! Use with caution.
+</Warning>
+
+Click **Delete All** → Confirm in dialog to remove all connected accounts at once.
+
+## Privacy Controls
+
+### Privacy Mode Toggle
+
+The **Eye/Eye-Off** button in the top-right toggles privacy mode:
+
+- **Privacy ON**: Email addresses and account names are masked
+- **Privacy OFF**: Full account details visible
+
+Perfect for screenshots, demos, or screen sharing.
+
+## Provider Icons and Badges
+
+### Provider Identification
+
+Each provider has a unique icon:
+- **Antigravity**: Purple logo
+- **OpenAI Codex**: OpenAI logo
+- **Gemini CLI**: Google Gemini logo
+- **Kiro**: CodeWhisperer icon
+- **GitHub Copilot**: GitHub Copilot icon (inverts in dark mode)
+- **Anthropic**: Claude logo
+
+### Plus-Only Providers
+
+Some providers (GitHub Copilot, Kiro) require the **Plus** version of CLI Proxy. These are marked with a yellow **Lock + Plus** badge when using the Standard version.
+
+<Tip>
+  Switch to CLI Proxy Plus in Settings to unlock premium providers.
+</Tip>
+
+## Authentication Status
+
+### Active Connections
+
+Connected accounts show:
+- Provider name
+- Account identifier (email or username)
+- Green "Active" status badge
+- Action buttons
+
+### Connection Errors
+
+If an account fails to load:
+- Error message displays on the quota card
+- Try refreshing the individual account
+- Re-authenticate if refresh tokens are expired
+- Delete and re-add the account if issues persist
+
+## OAuth Flow Details
+
+### Provider-Specific URLs
+
+ZeroLimit automatically handles OAuth redirects for each provider:
+
+| Provider | Auth Method |
+|----------|-------------|
+| **Antigravity** | Direct OAuth |
+| **Codex** | OpenAI OAuth |
+| **Gemini CLI** | Google OAuth with optional project ID |
+| **Anthropic** | Claude OAuth |
+| **Kiro** | AWS OAuth |
+| **Copilot** | GitHub Device Code Flow |
+
+### Polling Mechanism
+
+During authentication:
+1. ZeroLimit displays the auth URL
+2. Polls the CLI Proxy for completion status
+3. Updates UI when authentication succeeds
+4. Adds account to connected list automatically
+
+<Info>
+  The polling is automatic. Just complete the login in your browser and wait for the success message.
+</Info>
+
+## Advanced Configuration
+
+### Switching Between Standard and Plus
+
+In the Settings page:
+
+1. Locate the "Switch Version" section under CLI Proxy
+2. Click **Switch to Plus** (or **Switch to Standard**)
+3. ZeroLimit will:
+   - Stop the current server
+   - Download the alternate version if needed
+   - Start the new version automatically
+
+<Note>
+  Version switching requires an internet connection and may take a few moments to download.
+</Note>
+
+### Update CLI Proxy
+
+ZeroLimit can automatically update your CLI Proxy:
+
+1. Click **Check for Update** in Settings
+2. If an update is available, click **Update Now**
+3. The app will:
+   - Stop the current server
+   - Download the latest version
+   - Extract to the same directory
+   - Restart the server
+
+## File Organization
+
+### Authentication File Format
+
+Each account is stored as a JSON file:
+
+```json
+{
+  "provider": "codex",
+  "email": "user@example.com",
+  "refresh_token": "...",
+  "metadata": { ... }
+}
+```
+
+### Filenames
+
+Authentication files follow the pattern:
+- `{provider}-{identifier}.json`
+- Example: `codex-user_gmail_com.json`
+- Stored in CLI Proxy's auth directory
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Server won't start" icon="circle-exclamation">
+    - Verify the executable path is correct
+    - Check if port 8317 is already in use
+    - Run as administrator if needed
+    - Check firewall settings
+  </Accordion>
+  
+  <Accordion title="OAuth flow fails" icon="link-slash">
+    - Ensure CLI Proxy is running before authenticating
+    - Clear browser cookies for the provider
+    - Try manual callback URL entry
+    - Check internet connection
+  </Accordion>
+  
+  <Accordion title="Account shows error after adding" icon="triangle-exclamation">
+    - Verify credentials are valid on provider website
+    - Check if account has been suspended
+    - Try deleting and re-adding the account
+    - Review CLI Proxy logs for details
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor Quotas" icon="chart-line" href="/features/quota-monitoring">
+    View real-time quota usage for all connected accounts
+  </Card>
+  <Card title="System Tray" icon="window-minimize" href="/features/system-tray">
+    Learn about background operation and system tray controls
+  </Card>
+</CardGroup>

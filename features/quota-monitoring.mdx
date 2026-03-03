@@ -1,0 +1,214 @@
+---
+title: "Quota Monitoring"
+description: "Track your AI provider quotas in real-time with ZeroLimit's comprehensive monitoring dashboard"
+icon: "chart-line"
+---
+
+## Overview
+
+ZeroLimit provides real-time monitoring of your AI provider quotas across multiple accounts and services. The quota monitoring dashboard gives you instant visibility into your usage limits, helping you avoid service interruptions and manage your AI resources effectively.
+
+<Frame>
+  <img src="/images/quota-dashboard.png" alt="Quota Monitoring Dashboard" />
+</Frame>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Tracking" icon="refresh">
+    Monitor quota usage across all connected providers with automatic refresh capabilities
+  </Card>
+  <Card title="Multi-Provider Support" icon="layer-group">
+    Track quotas for Antigravity, OpenAI Codex, Gemini CLI, Kiro, GitHub Copilot, and Claude
+  </Card>
+  <Card title="Visual Progress Bars" icon="chart-bar">
+    Color-coded progress indicators show usage levels at a glance
+  </Card>
+  <Card title="Privacy Controls" icon="eye-slash">
+    Toggle privacy mode to mask sensitive account information
+  </Card>
+</CardGroup>
+
+## Supported Providers
+
+ZeroLimit monitors quotas for the following AI providers:
+
+- **Antigravity** - Claude/GPT, Gemini Pro, Gemini Flash models
+- **OpenAI Codex** - ChatGPT Plus/Free tier limits
+- **Gemini CLI** - Google AI quota buckets by project
+- **Kiro (CodeWhisperer)** - AWS AI coding assistant limits
+- **GitHub Copilot** - Copilot usage quotas
+- **Claude (Anthropic)** - Direct Claude API quotas
+
+## Using the Quota Dashboard
+
+### Viewing Your Quotas
+
+1. Navigate to the **Quota** page from the main menu
+2. Ensure you're connected to the CLI Proxy (see [Quickstart](/quickstart))
+3. Your connected accounts will automatically load and display quota information
+
+### Provider Filtering
+
+<Steps>
+  <Step title="Select Provider">
+    Click on any provider tab at the top of the dashboard to filter by that service
+  </Step>
+  <Step title="View Details">
+    The dashboard shows the number of connected accounts for each provider
+  </Step>
+  <Step title="Switch Between Providers">
+    Quickly switch between providers to monitor different services
+  </Step>
+</Steps>
+
+### View Modes
+
+ZeroLimit offers two display modes for your quota data:
+
+<Tabs>
+  <Tab title="List View">
+    **List View** displays detailed cards with comprehensive quota information:
+    - Account email/identifier
+    - Provider and filename badges
+    - Grouped model quotas (e.g., Claude, Gemini, GPT)
+    - Reset time counters
+    - Refresh and Details buttons
+    
+    This view is ideal for in-depth monitoring and analysis.
+  </Tab>
+  <Tab title="Card View">
+    **Card View** shows compact cards in a grid layout:
+    - Quick overview of multiple accounts
+    - Essential quota percentages
+    - Color-coded status indicators
+    - Space-efficient display
+    
+    Perfect for monitoring many accounts at once.
+  </Tab>
+</Tabs>
+
+### Understanding Quota Colors
+
+The dashboard uses color coding to indicate quota status:
+
+<AccordionGroup>
+  <Accordion title="Green (>20% remaining)" icon="circle-check" iconType="solid">
+    Your quota is healthy with plenty of usage remaining. No action needed.
+  </Accordion>
+  <Accordion title="Yellow (≤20% remaining)" icon="triangle-exclamation" iconType="solid">
+    Your quota is running low. Consider managing usage or waiting for reset.
+  </Accordion>
+  <Accordion title="Suspended" icon="ban" iconType="solid">
+    Account is temporarily suspended. Check your provider account status.
+  </Accordion>
+</AccordionGroup>
+
+## Quota Card Features
+
+### Refresh Individual Quotas
+
+Click the **Refresh** button on any quota card to update that specific account's quota information without refreshing all providers.
+
+### View Detailed Breakdown
+
+Click the **Details** button to open a modal showing:
+- Complete list of all models under your account
+- Individual quota percentages for each model
+- Reset times for quota replenishment
+- Organized by model groups (Claude, Gemini Pro, GPT, etc.)
+
+<Info>
+  The details modal organizes models into logical groups, making it easy to see which specific AI models have quota remaining.
+</Info>
+
+### Privacy Mode
+
+Protect sensitive information during screen sharing:
+
+1. Click the **Eye/Eye-Off** toggle in the top-right corner
+2. In privacy mode:
+   - Email addresses are masked (e.g., `j***@g*****.com`)
+   - Filenames and folders are partially hidden
+3. Toggle off to show full information
+
+## Refresh All Quotas
+
+Use the **Refresh All** button in the top-right to update quota information for all visible accounts in the current provider tab.
+
+<Note>
+  Quota data is automatically fetched when you first load the page. Use manual refresh to get the latest usage information.
+</Note>
+
+## Model Grouping
+
+ZeroLimit intelligently groups related models for easier monitoring:
+
+| Group | Includes |
+|-------|----------|
+| **Claude** | All Claude Sonnet, Opus models |
+| **Gemini Pro** | Gemini 3 Pro, high-capacity models |
+| **Gemini Flash** | Gemini 2.5 Flash, Flash Lite, fast models |
+| **GPT-4** | GPT-4, o1 models |
+| **GPT-3.5** | GPT-3.5 Turbo variants |
+
+### Average Percentage Display
+
+For grouped models, ZeroLimit shows the average quota remaining across all models in that group, giving you a quick health check.
+
+## Reset Times
+
+Many providers display quota reset times:
+- **Relative times**: "in 2 hours", "in 5 days"
+- **Automatic calculation**: Based on provider's reset schedule
+- **Per-model resets**: Some models reset at different intervals
+
+<Tip>
+  Plan your usage around reset times to ensure continuous access to AI services.
+</Tip>
+
+## Empty and Error States
+
+### No Credentials
+
+If you haven't connected any providers yet, you'll see a prompt to add accounts via the [Proxy Management](/features/proxy-management) page.
+
+### Connection Required
+
+Ensure the CLI Proxy is running and you're authenticated. See [Proxy Management](/features/proxy-management) for setup instructions.
+
+### Error Messages
+
+If quota fetching fails:
+- Check your internet connection
+- Verify the CLI Proxy is running
+- Ensure account credentials are valid
+- Try refreshing the individual account
+
+## Best Practices
+
+<Steps>
+  <Step title="Monitor Regularly">
+    Check your quotas daily if you're a heavy AI user
+  </Step>
+  <Step title="Set Up Multiple Accounts">
+    Connect multiple provider accounts for redundancy
+  </Step>
+  <Step title="Watch Reset Times">
+    Note when quotas reset to plan high-usage tasks
+  </Step>
+  <Step title="Use Privacy Mode">
+    Enable privacy mode when presenting or screen sharing
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Providers" icon="plus" href="/features/proxy-management">
+    Connect more AI provider accounts
+  </Card>
+  <Card title="Multi-Provider Support" icon="layer-group" href="/features/multi-provider-support">
+    Learn about supported providers
+  </Card>
+</CardGroup>

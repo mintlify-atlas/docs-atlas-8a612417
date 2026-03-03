@@ -1,0 +1,193 @@
+---
+title: Building from Source
+description: Build ZeroLimit desktop application from source code
+---
+
+## Prerequisites
+
+Before building ZeroLimit, ensure you have the following installed:
+
+### Required Tools
+
+- **Node.js** >= 20
+- **pnpm** 10.22.0 or higher
+- **Rust** (latest stable) - Install via [rustup](https://rustup.rs/)
+- **Tauri CLI** (included in dev dependencies)
+
+### Platform-Specific Requirements
+
+<Tabs>
+  <Tab title="Windows">
+    - Microsoft Visual Studio C++ Build Tools
+    - WebView2 (usually pre-installed on Windows 10/11)
+  </Tab>
+  <Tab title="macOS">
+    - Xcode Command Line Tools: `xcode-select --install`
+    - macOS 10.15 or later
+  </Tab>
+  <Tab title="Linux">
+    - WebkitGTK and dependencies:
+      ```bash
+      # Debian/Ubuntu
+      sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      # Fedora
+      sudo dnf install webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librsvg2-devel
+
+      # Arch
+      sudo pacman -S webkit2gtk-4.1 gtk3 libappindicator-gtk3 librsvg
+      ```
+  </Tab>
+</Tabs>
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/0xtbug/zero-limit.git
+cd zero-limit
+
+# Install dependencies
+pnpm install
+
+# Run in development mode
+pnpm run tauri dev
+
+# Build for production
+pnpm run tauri build
+```
+
+## Development Workflow
+
+### Running the Development Server
+
+```bash
+# Frontend only (React + Vite dev server)
+pnpm run dev
+```
+
+This starts the Vite dev server at `http://localhost:1420` for rapid frontend development without the Tauri wrapper.
+
+### Running the Full Desktop App
+
+```bash
+# Full Tauri application with hot-reload
+pnpm run tauri dev
+```
+
+This command:
+1. Starts the Vite dev server
+2. Compiles the Rust backend
+3. Launches the desktop application
+4. Enables hot-reload for both frontend and backend changes
+
+### Type Checking and Building Frontend
+
+```bash
+# Run TypeScript type checking and build frontend bundle
+pnpm run build
+
+# Preview the built frontend locally
+pnpm run preview
+```
+
+## Production Build
+
+### Building the Application
+
+```bash
+pnpm run tauri build
+```
+
+This creates platform-specific installers:
+
+**Windows:**
+- `src-tauri/target/release/bundle/nsis/*.exe` - NSIS installer
+- `src-tauri/target/release/bundle/msi/*.msi` - MSI installer
+
+**macOS:**
+- `src-tauri/target/release/bundle/dmg/*.dmg` - DMG image
+- `src-tauri/target/release/bundle/macos/*.app` - Application bundle
+
+**Linux:**
+- `src-tauri/target/release/bundle/deb/*.deb` - Debian package
+- `src-tauri/target/release/bundle/rpm/*.rpm` - RPM package
+- `src-tauri/target/release/bundle/appimage/*.AppImage` - AppImage
+
+### Build Artifacts
+
+- **Frontend build:** `dist/` - Vite-generated static assets
+- **Rust build:** `src-tauri/target/` - Compiled Rust binaries and installers
+
+## Configuration Files
+
+### Tauri Configuration
+
+`src-tauri/tauri.conf.json` - Main Tauri configuration:
+- Application metadata (name, version, identifier)
+- Window settings (dimensions, title)
+- Bundle options (icon, targets)
+- Plugin configuration (updater, etc.)
+
+### Build Commands
+
+Defined in `tauri.conf.json`:
+- `beforeDevCommand`: `pnpm dev` - Runs before dev mode
+- `beforeBuildCommand`: `pnpm build` - Runs before production build
+- `devUrl`: `http://localhost:1420` - Development server URL
+- `frontendDist`: `../dist` - Production frontend assets
+
+### Cargo Configuration
+
+`src-tauri/Cargo.toml` - Rust dependencies:
+- Tauri core with tray icon support
+- Plugins: shell, dialog, fs, updater, process, os
+- HTTP client (reqwest), async runtime (tokio)
+- Archive handling (zip, tar, flate2)
+
+## Troubleshooting
+
+### Common Issues
+
+**WebView2 missing on Windows:**
+```bash
+# Download and install from Microsoft
+# https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+```
+
+**Rust compilation errors:**
+```bash
+# Update Rust to latest stable
+rustup update stable
+
+# Clear build cache
+cd src-tauri
+cargo clean
+```
+
+**Node/pnpm version mismatch:**
+```bash
+# Use Node >= 20
+node --version
+
+# Install correct pnpm version
+corepack enable
+corepack prepare pnpm@10.22.0 --activate
+```
+
+**Build fails on Linux:**
+```bash
+# Ensure all system dependencies are installed
+# See Platform-Specific Requirements above
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Project Structure" icon="folder-tree" href="/development/project-structure">
+    Understand the codebase organization
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Learn how to contribute to ZeroLimit
+  </Card>
+</CardGroup>

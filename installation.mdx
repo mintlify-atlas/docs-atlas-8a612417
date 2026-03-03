@@ -1,0 +1,261 @@
+---
+title: Installation
+description: Download and install ZeroLimit on Windows, macOS, or Linux
+---
+
+# Installation
+
+ZeroLimit is available for Windows, macOS, and Linux. Choose your platform below to get started.
+
+<Note>
+  All releases are available on the [GitHub Releases page](https://github.com/0xtbug/zero-limit/releases).
+</Note>
+
+## Windows
+
+ZeroLimit offers multiple installation options for Windows users:
+
+<CardGroup cols={2}>
+  <Card title="NSIS Installer (Recommended)" icon="download">
+    Full installer with automatic updates and Start Menu integration
+  </Card>
+  <Card title="MSI Installer" icon="box">
+    Standard Windows Installer package for enterprise deployments
+  </Card>
+  <Card title="Portable Executable" icon="file">
+    Run directly without installation - perfect for USB drives
+  </Card>
+</CardGroup>
+
+### Download Options
+
+<Steps>
+  <Step title="Choose Your Architecture">
+    Download the appropriate installer from [Releases](https://github.com/0xtbug/zero-limit/releases):
+    
+    - `ZeroLimit_x.x.x_x64-setup.exe` - NSIS installer for 64-bit systems
+    - `ZeroLimit_x.x.x_arm64-setup.exe` - NSIS installer for ARM64 systems
+    - `ZeroLimit_x.x.x_x64_en-US.msi` - MSI installer for 64-bit systems
+    - `ZeroLimit_x.x.x_portable.exe` - Portable executable (no installation required)
+  </Step>
+  
+  <Step title="Run the Installer">
+    Double-click the downloaded file and follow the installation wizard.
+    
+    <Info>
+      The NSIS installer will automatically create Start Menu shortcuts and register the application for auto-updates.
+    </Info>
+  </Step>
+  
+  <Step title="Launch ZeroLimit">
+    Find ZeroLimit in your Start Menu or desktop shortcut and launch the application.
+  </Step>
+</Steps>
+
+### System Requirements
+
+- Windows 10 or later (64-bit or ARM64)
+- 200 MB free disk space
+- Internet connection for initial setup and updates
+
+## macOS
+
+ZeroLimit supports both Apple Silicon and Intel-based Macs.
+
+### Download Options
+
+<Tabs>
+  <Tab title="Apple Silicon (M1/M2/M3)">
+    Download `ZeroLimit_x.x.x_aarch64.dmg` for Apple Silicon processors.
+  </Tab>
+  <Tab title="Intel">
+    Download `ZeroLimit_x.x.x_x64.dmg` for Intel-based Macs.
+  </Tab>
+</Tabs>
+
+### Installation Steps
+
+<Steps>
+  <Step title="Download the DMG">
+    Get the appropriate DMG file from [Releases](https://github.com/0xtbug/zero-limit/releases) based on your Mac's processor.
+  </Step>
+  
+  <Step title="Open the DMG">
+    Double-click the downloaded DMG file to mount it.
+  </Step>
+  
+  <Step title="Drag to Applications">
+    Drag the ZeroLimit app icon to your Applications folder.
+  </Step>
+  
+  <Step title="Handle Security Warning">
+    <Warning>
+      The app is not signed with an Apple Developer certificate. macOS may block the first launch.
+    </Warning>
+    
+    If macOS prevents you from opening the app, run this command in Terminal:
+    
+    ```bash
+    xattr -cr /Applications/ZeroLimit.app
+    ```
+    
+    Then try launching the app again from your Applications folder.
+  </Step>
+</Steps>
+
+### System Requirements
+
+- macOS 11 (Big Sur) or later
+- Apple Silicon or Intel processor
+- 200 MB free disk space
+
+## Linux
+
+ZeroLimit provides native packages for major Linux distributions.
+
+<CardGroup cols={3}>
+  <Card title="Debian/Ubuntu" icon="ubuntu">
+    `.deb` package for Debian-based distributions
+  </Card>
+  <Card title="Fedora/RHEL" icon="fedora">
+    `.rpm` package for Red Hat-based distributions
+  </Card>
+  <Card title="Universal" icon="linux">
+    `.AppImage` for any Linux distribution
+  </Card>
+</CardGroup>
+
+### Debian/Ubuntu Installation
+
+<Steps>
+  <Step title="Download DEB Package">
+    Download `ZeroLimit_x.x.x_amd64.deb` from [Releases](https://github.com/0xtbug/zero-limit/releases).
+  </Step>
+  
+  <Step title="Install with APT">
+    ```bash
+    sudo apt install ./ZeroLimit_x.x.x_amd64.deb
+    ```
+  </Step>
+  
+  <Step title="Launch Application">
+    ```bash
+    zerolimit
+    ```
+    
+    Or find ZeroLimit in your application menu.
+  </Step>
+</Steps>
+
+### Fedora/RHEL Installation
+
+<Steps>
+  <Step title="Download RPM Package">
+    Download `ZeroLimit_x.x.x_x86_64.rpm` from [Releases](https://github.com/0xtbug/zero-limit/releases).
+  </Step>
+  
+  <Step title="Install with DNF">
+    ```bash
+    sudo dnf install ./ZeroLimit_x.x.x_x86_64.rpm
+    ```
+    
+    Or on older systems using yum:
+    
+    ```bash
+    sudo yum install ./ZeroLimit_x.x.x_x86_64.rpm
+    ```
+  </Step>
+  
+  <Step title="Launch Application">
+    ```bash
+    zerolimit
+    ```
+  </Step>
+</Steps>
+
+### AppImage (Universal)
+
+AppImage works on any Linux distribution without installation.
+
+<Steps>
+  <Step title="Download AppImage">
+    Download `ZeroLimit_x.x.x_amd64.AppImage` from [Releases](https://github.com/0xtbug/zero-limit/releases).
+  </Step>
+  
+  <Step title="Make Executable">
+    ```bash
+    chmod +x ZeroLimit_x.x.x_amd64.AppImage
+    ```
+  </Step>
+  
+  <Step title="Run Application">
+    ```bash
+    ./ZeroLimit_x.x.x_amd64.AppImage
+    ```
+  </Step>
+</Steps>
+
+### System Requirements
+
+- Any modern Linux distribution (64-bit)
+- 200 MB free disk space
+- GTK 3.x or later (for .deb and .rpm packages)
+
+## Building from Source
+
+If you prefer to build ZeroLimit from source:
+
+<Steps>
+  <Step title="Clone Repository">
+    ```bash
+    git clone https://github.com/0xtbug/zero-limit.git
+    cd zero-limit
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Requires Node.js 20+ and pnpm 10+:
+    
+    ```bash
+    pnpm install
+    ```
+  </Step>
+  
+  <Step title="Development Build">
+    Run the app in development mode:
+    
+    ```bash
+    pnpm run tauri dev
+    ```
+  </Step>
+  
+  <Step title="Production Build">
+    Build the production binary:
+    
+    ```bash
+    pnpm run tauri build
+    ```
+    
+    <Info>
+      The built application will be in `src-tauri/target/release/`.
+    </Info>
+  </Step>
+</Steps>
+
+### Build Requirements
+
+- **Node.js**: 20 or later
+- **pnpm**: 10.22.0 or later
+- **Rust**: Latest stable version
+- **Platform-specific dependencies**:
+  - **Windows**: Visual Studio Build Tools
+  - **macOS**: Xcode Command Line Tools
+  - **Linux**: Development libraries (webkit2gtk, libssl-dev, etc.)
+
+<Tip>
+  Refer to the [Tauri Prerequisites Guide](https://tauri.app/v2/guides/prerequisites/) for detailed build environment setup instructions.
+</Tip>
+
+## Next Steps
+
+Now that you have ZeroLimit installed, proceed to the [Quick Start Guide](/quickstart) to configure and start using the application.

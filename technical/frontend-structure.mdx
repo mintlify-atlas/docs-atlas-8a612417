@@ -1,0 +1,530 @@
+---
+title: Frontend Structure
+description: React frontend architecture, module organization, and data flow
+---
+
+# Frontend Structure
+
+The ZeroLimit frontend is built with React 19 and TypeScript, following a feature-sliced design pattern with clear separation of concerns.
+
+## Directory Layout
+
+```
+src/
+├── features/           # Feature modules (pages + logic)
+│   ├── about/         # About page & update checker
+│   ├── auth/          # Authentication & login
+│   ├── dashboard/     # Main dashboard with usage overview
+│   ├── logs/          # Log viewer
+│   ├── onboarding/    # First-time setup flow
+│   ├── providers/     # Provider management
+│   ├── quota/         # Quota monitoring & cards
+│   └── settings/      # Application settings
+│
+├── shared/            # Reusable components & utilities
+│   ├── components/    # Shared UI components
+│   │   └── ui/       # Base UI primitives (Radix + Tailwind)
+│   ├── hooks/        # Custom React hooks
+│   ├── lib/          # Utility libraries
+│   └── utils/        # Helper functions
+│
+├── services/          # External integrations
+│   ├── api/          # Backend API communication
+│   │   ├── parsers/  # Provider-specific data parsers
+│   │   ├── auth.service.ts
+│   │   ├── config.service.ts
+│   │   ├── logs.service.ts
+│   │   ├── oauth.service.ts
+│   │   ├── quota.service.ts
+│   │   └── client.ts  # Axios HTTP client
+│   ├── storage/      # Local storage abstraction
+│   └── tauri/        # Tauri IPC bridge
+│
+├── layouts/           # Page layouts
+│   └── DefaultLayout.tsx
+│
+├── router/            # Routing configuration
+│   ├── MainRoutes.ts
+│   └── ProtectedRoute.tsx
+│
+├── i18n/              # Internationalization
+│   ├── locales/      # Translation files
+│   └── index.ts
+│
+├── types/             # TypeScript type definitions
+│   ├── api.ts
+│   ├── auth.ts
+│   ├── quota.ts
+│   ├── usage.ts
+│   └── index.ts
+│
+├── constants/         # Application constants
+│
+├── App.tsx            # Root component
+└── main.tsx           # Application entry point
+```
+
+## Feature Module Pattern
+
+Each feature follows a consistent structure:
+
+```
+features/quota/
+├── QuotaPage.tsx              # Main page component
+├── useQuotaPresenter.ts       # Presentation logic hook
+└── components/                # Feature-specific components
+    ├── CompactQuotaCard.tsx
+    ├── ProviderFilter.tsx
+    └── ProviderQuotaCard.tsx
+```
+
+### Example: Quota Feature
+
+#### Page Component (`QuotaPage.tsx`)
+
+```tsx
+export function QuotaPage() {
+  const presenter = useQuotaPresenter();
+  
+  return (
+    <div>
+      <ProviderFilter 
+        selected={presenter.selectedProvider}
+        onChange={presenter.setSelectedProvider}
+      />
+      {presenter.filteredQuotas.map(quota => (
+        <ProviderQuotaCard key={quota.provider} data={quota} />
+      ))}
+    </div>
+  );
+}
+```
+
+#### Presenter Hook (`useQuotaPresenter.ts`)
+
+```tsx
+export function useQuotaPresenter() {
+  const { quotas, loading } = useQuotaStore();
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  
+  const filteredQuotas = useMemo(() => {
+    if (!selectedProvider) return quotas;
+    return quotas.filter(q => q.provider === selectedProvider);
+  }, [quotas, selectedProvider]);
+  
+  return {
+    quotas,
+    loading,
+    selectedProvider,
+    setSelectedProvider,
+    filteredQuotas
+  };
+}
+```
+
+## State Management
+
+ZeroLimit uses **Zustand** for global state management with dedicated stores per domain:
+
+### Store Examples
+
+#### Configuration Store (`features/settings/config.store.ts`)
+
+```typescript
+import { create } from 'zustand';
+import { configApi } from '@/services/api/config.service';
+
+interface ConfigState {
+  config: Config | null;
+  loading: boolean;
+  error: string | null;
+  lastFetch: number;
+  fetchConfig: (forceRefresh?: boolean) => Promise<Config>;
+  clearCache: () => void;
+}
+
+export const useConfigStore = create<ConfigState>((set, get) => ({
+  config: null,
+  loading: false,
+  error: null,
+  lastFetch: 0,
+  
+  fetchConfig: async (forceRefresh = false) => {
+    const { lastFetch, config } = get();
+    
+    // Return cached if fresh
+    if (!forceRefresh && config && Date.now() - lastFetch < CACHE_EXPIRY_MS) {
+      return config;
+    }
+    
+    set({ loading: true, error: null });
+    try {
+      const data = await configApi.getConfig();
+      set({ config: data, loading: false, lastFetch: Date.now() });
+      return data;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+  
+  clearCache: () => {
+    set({ config: null, loading: false, error: null, lastFetch: 0 });
+  }
+}));
+```
+
+### Key Stores
+
+| Store | Location | Purpose |
+|-------|----------|--------|
+| `auth.store.ts` | `features/auth/` | Authentication state |
+| `config.store.ts` | `features/settings/` | App configuration |
+| `cliProxy.store.ts` | `features/settings/` | CLI Proxy state |
+| `usage.store.ts` | `features/dashboard/` | Usage statistics |
+| `update.store.ts` | `features/about/` | App update checking |
+
+## Service Layer
+
+### API Client Architecture
+
+The API client (`services/api/client.ts`) uses Axios with interceptors:
+
+```typescript
+class ApiClient {
+  private instance: AxiosInstance;
+  private apiBase: string = '';
+  private managementKey: string = '';
+  
+  constructor() {
+    this.instance = axios.create({
+      timeout: REQUEST_TIMEOUT_MS,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    this.setupInterceptors();
+  }
+  
+  private setupInterceptors(): void {
+    // Request interceptor: Add auth header
+    this.instance.interceptors.request.use(config => {
+      config.baseURL = this.apiBase;
+      if (this.managementKey) {
+        config.headers.Authorization = `Bearer ${this.managementKey}`;
+      }
+      return config;
+    });
+    
+    // Response interceptor: Handle version headers & errors
+    this.instance.interceptors.response.use(
+      response => {
+        const version = this.readHeader(response.headers, VERSION_HEADER_KEYS);
+        if (version) {
+          window.dispatchEvent(new CustomEvent('server-version-update', {
+            detail: { version }
+          }));
+        }
+        return response;
+      },
+      error => {
+        if (error.response?.status === 401) {
+          window.dispatchEvent(new Event('unauthorized'));
+        }
+        return Promise.reject(this.handleError(error));
+      }
+    );
+  }
+}
+```
+
+### API Services
+
+| Service | Purpose |
+|---------|--------|
+| `auth.service.ts` | Login, session validation |
+| `config.service.ts` | App configuration management |
+| `quota.service.ts` | Quota data fetching |
+| `oauth.service.ts` | OAuth provider integration |
+| `logs.service.ts` | Log file retrieval |
+
+### Provider Parsers
+
+Each AI provider has a dedicated parser in `services/api/parsers/`:
+
+```typescript
+// parsers/claude.parser.ts
+export function parseClaudeQuota(data: any): QuotaData {
+  return {
+    provider: 'Claude',
+    usage: data.current_usage,
+    limit: data.monthly_limit,
+    resetDate: new Date(data.reset_at)
+  };
+}
+```
+
+Supported providers:
+- `antigravity.parser.ts`
+- `claude.parser.ts`
+- `codex.parser.ts`
+- `copilot.parser.ts`
+- `gemini.parser.ts`
+- `kiro.parser.ts`
+
+## Tauri Integration
+
+### Tauri Service Bridge (`services/tauri/index.ts`)
+
+```typescript
+import { invoke } from '@tauri-apps/api/core';
+
+/**
+ * Open URL in system browser
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  return invoke<void>('open_external_url', { url });
+}
+
+/**
+ * Check if running in Tauri context
+ */
+export function isTauri(): boolean {
+  return '__TAURI_INTERNALS__' in window;
+}
+```
+
+### Tauri Plugins Used
+
+```typescript
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
+import { platform } from '@tauri-apps/plugin-os';
+import { Command } from '@tauri-apps/plugin-shell';
+import { check } from '@tauri-apps/plugin-updater';
+```
+
+## Routing
+
+### Route Structure (`router/MainRoutes.ts`)
+
+```tsx
+import { createBrowserRouter } from 'react-router-dom';
+import { ProtectedRoute } from './ProtectedRoute';
+
+export const router = createBrowserRouter([
+  {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
+    path: '/',
+    element: <ProtectedRoute><DefaultLayout /></ProtectedRoute>,
+    children: [
+      { path: '/', element: <DashboardPage /> },
+      { path: '/quota', element: <QuotaPage /> },
+      { path: '/providers', element: <ProvidersPage /> },
+      { path: '/logs', element: <LogsPage /> },
+      { path: '/settings', element: <SettingsPage /> },
+      { path: '/about', element: <AboutPage /> }
+    ]
+  }
+]);
+```
+
+### Protected Routes
+
+```tsx
+export function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuthStore();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+```
+
+## UI Component System
+
+### Base Components (`shared/components/ui/`)
+
+Built on Radix UI primitives with Tailwind styling:
+
+- `Button.tsx` - Button variants
+- `Dialog.tsx` - Modal dialogs
+- `Select.tsx` - Dropdown selects
+- `Progress.tsx` - Progress bars
+- `ScrollArea.tsx` - Custom scrollbars
+- `Label.tsx` - Form labels
+
+### Styling Strategy
+
+```tsx
+import { cva } from 'class-variance-authority';
+import { cn } from '@/shared/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md font-medium',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        outline: 'border border-input bg-background hover:bg-accent',
+        ghost: 'hover:bg-accent hover:text-accent-foreground'
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 px-3',
+        lg: 'h-11 px-8'
+      }
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default'
+    }
+  }
+);
+```
+
+## Custom Hooks
+
+### Shared Hooks (`shared/hooks/`)
+
+| Hook | Purpose |
+|------|--------|
+| `useAppVersion.ts` | Get app version from Tauri |
+| `useHeaderRefresh.ts` | Refresh on header action |
+| `useInterval.ts` | Declarative interval hook |
+
+### Example: Interval Hook
+
+```typescript
+export function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef(callback);
+  
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+  
+  useEffect(() => {
+    if (delay === null) return;
+    
+    const id = setInterval(() => savedCallback.current(), delay);
+    return () => clearInterval(id);
+  }, [delay]);
+}
+```
+
+## Type System
+
+### Core Types (`types/`)
+
+```typescript
+// types/api.ts
+export interface ApiClientConfig {
+  apiBase: string;
+  managementKey: string;
+  timeout?: number;
+}
+
+export interface ApiError extends Error {
+  status?: number;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
+// types/quota.ts
+export interface QuotaData {
+  provider: string;
+  usage: number;
+  limit: number;
+  resetDate: Date;
+  percentage: number;
+}
+
+// types/auth.ts
+export interface AuthState {
+  isAuthenticated: boolean;
+  managementKey: string | null;
+  apiBase: string | null;
+}
+```
+
+## Internationalization
+
+Setup with i18next for future multi-language support:
+
+```typescript
+// i18n/index.ts
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import en from './locales/en.json';
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources: { en: { translation: en } },
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: { escapeValue: false }
+  });
+```
+
+## Performance Optimizations
+
+### 1. React Compiler
+```json
+// vite.config.ts
+react({
+  babel: {
+    plugins: [['babel-plugin-react-compiler']]
+  }
+})
+```
+
+### 2. Request Deduplication
+```typescript
+let inFlightRequest: Promise<Config> | null = null;
+
+if (inFlightRequest) {
+  return inFlightRequest; // Reuse pending request
+}
+```
+
+### 3. Cache with Expiry
+```typescript
+if (!forceRefresh && config && Date.now() - lastFetch < CACHE_EXPIRY_MS) {
+  return config; // Return cached data
+}
+```
+
+## Build Configuration
+
+### TypeScript Configuration
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+### Path Alias
+All imports use `@/` prefix:
+```typescript
+import { Button } from '@/shared/components/ui/Button';
+import { useAuthStore } from '@/features/auth/auth.store';
+import type { QuotaData } from '@/types';
+```
+
+## Next Steps
+
+- [Architecture Overview](/technical/architecture-overview) - Overall system architecture
+- [Backend Structure](/technical/backend-structure) - Rust/Tauri backend details

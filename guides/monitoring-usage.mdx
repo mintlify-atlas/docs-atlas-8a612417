@@ -1,0 +1,328 @@
+---
+title: Monitoring Quota Usage
+description: Track and monitor API quota usage across all your connected provider accounts
+---
+
+## Overview
+
+The Quota page in ZeroLimit provides real-time visibility into your API usage limits, remaining quota, and rate limits across all connected provider accounts. This helps you avoid hitting limits and plan your API usage effectively.
+
+## Accessing Quota Information
+
+<Steps>
+
+<Step title="Navigate to Quota page">
+Click **Quota** in the main navigation to view usage information for all connected accounts.
+</Step>
+
+<Step title="Wait for quota refresh">
+ZeroLimit automatically fetches quota data from each provider. This may take a few seconds for multiple accounts.
+</Step>
+
+<Step title="Review quota status">
+Each account displays:
+- Provider name and icon
+- Account identifier (email or name)
+- Model-specific quota information
+- Usage percentage or remaining limits
+- Reset times or renewal dates
+</Step>
+
+</Steps>
+
+## View Modes
+
+ZeroLimit offers two view modes for quota information:
+
+### List View
+
+The default view showing detailed cards for each account:
+- Full quota breakdown by model
+- Progress bars showing usage percentage
+- Detailed metrics (requests remaining, tokens available, etc.)
+- Error messages if quota fetch fails
+
+Switch to List View by clicking the list icon in the top-right corner.
+
+### Card View (Grid)
+
+A compact grid layout showing:
+- Multiple accounts in a responsive grid
+- Essential quota information at a glance
+- Color-coded status indicators
+- Quick-scan overview of all accounts
+
+Switch to Card View by clicking the grid icon in the top-right corner.
+
+## Provider-Specific Quota Information
+
+### Antigravity
+
+Displays model-specific quota:
+- List of available models
+- Usage percentage per model
+- Quota reset times
+
+### ChatGPT (Codex)
+
+Shows rate limits and usage:
+- Requests remaining in current window
+- Rate limit reset time
+- Multiple limit types (per-minute, per-hour, per-day)
+- Account-specific limits
+
+### Claude
+
+Displays token-based quota:
+- Total tokens available
+- Tokens consumed
+- Reset date for quota renewal
+- Model availability status
+
+### Gemini CLI
+
+Shows Google Cloud quota buckets:
+- Requests per minute (RPM)
+- Tokens per minute (TPM)
+- Requests per day (RPD)
+- Per-model quota allocation
+- Project-specific limits
+
+### Kiro
+
+Displays subscription-based quota:
+- Current plan name (Free, Pro, Suspended)
+- Usage percentage
+- Reset time or suspension reason
+- Model availability
+
+### GitHub Copilot
+
+Shows entitlement status:
+- Active subscription confirmation
+- Available models
+- Usage limits (if applicable)
+- Subscription renewal date
+
+## Filtering by Provider
+
+When you have multiple accounts, use the filter tabs to view specific providers:
+
+<Steps>
+
+<Step title="View available filters">
+Filter tabs appear below the page header showing:
+- **All** - Shows all connected accounts
+- Individual provider tabs (e.g., Claude, ChatGPT, Gemini)
+- Account count badge on each tab
+</Step>
+
+<Step title="Select a filter">
+Click on any provider tab to show only accounts for that provider.
+</Step>
+
+<Step title="Return to all accounts">
+Click the **All** tab to show accounts from all providers again.
+</Step>
+
+</Steps>
+
+## Refreshing Quota Data
+
+### Refresh All Accounts
+
+Click the **Refresh All** button in the top-right corner to fetch latest quota data for all displayed accounts.
+
+<Note>
+Refreshing fetches real-time data from provider APIs, so it may take several seconds to complete.
+</Note>
+
+### Refresh Individual Account
+
+Each account card has a refresh button:
+1. Locate the account you want to refresh
+2. Click the refresh icon on the account card
+3. Wait for the updated quota information
+
+## Understanding Quota Status
+
+### Normal Status (Green)
+
+You have sufficient quota remaining:
+- Usage below 70% of limit
+- No rate limit warnings
+- All models available
+
+### Warning Status (Yellow)
+
+Approaching quota limits:
+- Usage between 70-90% of limit
+- May need to reduce API calls
+- Consider waiting for quota reset
+
+### Critical Status (Red)
+
+Quota exhausted or suspended:
+- Usage above 90% of limit
+- Rate limits exceeded
+- Account suspended
+- API calls may fail
+
+<Warning>
+When quota is exhausted, API requests will fail until the quota resets. Plan your usage accordingly.
+</Warning>
+
+### Error Status
+
+Quota information couldn't be retrieved:
+- **Token expired** - Re-authenticate the account
+- **Access denied (401/403)** - Check account permissions
+- **Rate limit exceeded (429)** - Wait before refreshing
+- **Network error** - Check connectivity to provider API
+
+## Privacy Mode
+
+Protect sensitive account information:
+
+1. Click the eye icon in the top-right corner
+2. Account emails and identifiers are masked
+3. Click again to reveal information
+
+Useful when:
+- Sharing your screen
+- Taking screenshots for documentation
+- Presenting to a team
+
+## Quota Reset Times
+
+Each provider has different quota reset schedules:
+
+**Hourly Resets**
+- Resets at the top of each hour
+- Common for rate limits (requests per hour)
+
+**Daily Resets**
+- Resets at midnight UTC or provider timezone
+- Common for daily token allowances
+
+**Monthly Resets**
+- Resets on subscription renewal date
+- Common for subscription-based limits
+
+**Rolling Windows**
+- Resets based on when usage occurred
+- Common for "per-minute" or "last 60 seconds" limits
+
+<Tip>
+Plan API-intensive operations after quota resets to avoid hitting limits mid-operation.
+</Tip>
+
+## Reading Quota Details
+
+### Progress Bars
+
+Visual indicators show usage percentage:
+- **Green** - 0-70% used (safe)
+- **Yellow** - 70-90% used (warning)
+- **Red** - 90-100% used (critical)
+
+### Numeric Values
+
+Exact quota numbers displayed:
+- "15,000 / 20,000" - 15,000 used out of 20,000 limit
+- "5,000 remaining" - Remaining quota before limit
+- "75%" - Percentage of quota consumed
+
+### Time Remaining
+
+Shows when quota will reset:
+- "Resets in 2h 15m" - Time until reset
+- "Resets at 12:00 AM" - Specific reset time
+- "Resets on Jan 15" - Date-based reset
+
+## Troubleshooting
+
+### Quota shows "Token invalid or expired"
+
+**Problem**: Authentication token is no longer valid.
+
+**Solution**:
+1. Go to **Providers** page
+2. Delete the affected account
+3. Re-add the account using OAuth authentication
+4. Return to Quota page - data should now load
+
+### Quota shows "Access denied (403)"
+
+**Problem**: Account lacks necessary permissions or subscription.
+
+**Solution**:
+- Verify your account has an active subscription with the provider
+- Check that the account has API access enabled
+- For GitHub Copilot: ensure you have an active Copilot subscription
+- For Gemini CLI: verify the Google Cloud project has required APIs enabled
+
+### Quota stuck in loading state
+
+**Problem**: Quota data never finishes loading.
+
+**Solution**:
+1. Check your internet connection
+2. Verify the CLI Proxy is running (Settings > Status should be "Running")
+3. Try refreshing just the stuck account
+4. If it persists, restart the CLI Proxy from Settings
+
+### "Rate limit exceeded" error
+
+**Problem**: Too many quota checks in a short time.
+
+**Solution**:
+- Wait 1-2 minutes before refreshing again
+- Provider APIs have rate limits on quota endpoint calls
+- Use the automatic refresh instead of manual refreshing repeatedly
+
+### Quota shows 0% but API calls work
+
+**Problem**: Quota endpoint returns incomplete data.
+
+**Solution**:
+- Some providers don't expose accurate real-time quota
+- The account still works even if quota display is incorrect
+- Check the provider's dashboard for accurate quota information
+- Consider this a known limitation of the provider's API
+
+### No quota data after adding account
+
+**Problem**: New account doesn't show any quota information.
+
+**Solution**:
+1. Wait 10-15 seconds for initial fetch
+2. Click the refresh button on the account card
+3. Verify the account is working by checking Providers page
+4. Some providers may not support quota API endpoints
+
+## Dashboard Statistics
+
+For aggregated usage across all providers, visit the **Dashboard** page:
+
+- Total requests across all accounts
+- Total tokens consumed
+- Request trends over time
+- Token usage trends
+- Per-model statistics
+- Per-API source breakdown
+
+<Note>
+Dashboard statistics require "usage-statistics-enabled: true" in your CLI Proxy config.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add More Accounts" icon="plus" href="/guides/adding-accounts">
+    Connect additional provider accounts to expand your quota pool
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/troubleshooting">
+    Solutions for common quota and connection issues
+  </Card>
+</CardGroup>

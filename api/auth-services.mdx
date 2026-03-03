@@ -1,0 +1,492 @@
+---
+title: Authentication Services
+description: API services for managing authentication files and credentials
+---
+
+# Authentication Services
+
+The authentication service provides methods for managing authentication files that store credentials for various AI providers.
+
+## Overview
+
+Authentication in ZeroLimit is file-based:
+- Auth files are stored by CLIProxyAPI (typically in `~/.zerolimit/auth`)
+- Supported formats: `.har` (HTTP Archive), `.txt`, `.json`
+- Each file represents credentials for one provider account
+- Files are indexed by their order in the list (0, 1, 2, ...)
+
+**Implementation**: `src/services/api/auth.service.ts`
+
+---
+
+## API Reference
+
+### list
+
+Retrieves all stored authentication files.
+
+**Signature**:
+
+```typescript
+list(): Promise<AuthFilesResponse>
+```
+
+<ResponseField name="files" type="AuthFile[]">
+  Array of authentication file metadata
+</ResponseField>
+
+**Types**:
+
+```typescript
+interface AuthFile {
+  filename: string;     // File name (e.g., "claude_session.har")
+  provider: string;     // Provider name (e.g., "claude", "openai")
+  provider_key: string; // Provider identifier key
+  size: number;         // File size in bytes
+  modified: string;     // Last modified timestamp (ISO 8601)
+}
+
+interface AuthFilesResponse {
+  files: AuthFile[];
+}
+```
+
+**Example**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+const response = await authFilesApi.list();
+
+console.log(`Found ${response.files.length} auth files`);
+
+response.files.forEach((file, index) => {
+  console.log(`[${index}] ${file.provider}: ${file.filename}`);
+  console.log(`  Size: ${file.size} bytes`);
+  console.log(`  Modified: ${file.modified}`);
+});
+```
+
+**Endpoint**: `GET /v0/management/auth-files`
+
+**Implementation**: `src/services/api/auth.service.ts:9`
+
+---
+
+### upload
+
+Uploads a new authentication file.
+
+**Signature**:
+
+```typescript
+upload(formData: FormData): Promise<{ status: string }>
+```
+
+<ParamField path="formData" type="FormData" required>
+  Form data containing the file to upload with field name `"file"`
+</ParamField>
+
+<ResponseField name="status" type="string">
+  Upload status message (e.g., `"ok"`, `"success"`)
+</ResponseField>
+
+**Example**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+// From file input
+const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const result = await authFilesApi.upload(formData);
+    console.log('Upload successful:', result.status);
+  } catch (error) {
+    console.error('Upload failed:', error);
+  }
+};
+
+// From blob/data
+const uploadFromBlob = async (data: Blob, filename: string) => {
+  const formData = new FormData();
+  formData.append('file', data, filename);
+
+  const result = await authFilesApi.upload(formData);
+  return result;
+};
+```
+
+**Endpoint**: `POST /v0/management/auth-files`
+
+**Content-Type**: `multipart/form-data`
+
+**Implementation**: `src/services/api/auth.service.ts:17`
+
+**Supported file types**:
+- `.har` - HTTP Archive (exported from browser DevTools)
+- `.txt` - Plain text credentials
+- `.json` - JSON formatted credentials
+
+---
+
+### deleteFile
+
+Deletes a specific authentication file by name.
+
+**Signature**:
+
+```typescript
+deleteFile(name: string): Promise<void>
+```
+
+<ParamField path="name" type="string" required>
+  Filename to delete (e.g., `"claude_session.har"`)
+</ParamField>
+
+**Example**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+// Delete a specific file
+await authFilesApi.deleteFile('claude_session.har');
+console.log('File deleted successfully');
+
+// Delete with confirmation
+const deleteWithConfirm = async (filename: string) => {
+  if (confirm(`Delete ${filename}?`)) {
+    try {
+      await authFilesApi.deleteFile(filename);
+      console.log('Deleted:', filename);
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  }
+};
+```
+
+**Endpoint**: `DELETE /v0/management/auth-files?name={filename}`
+
+**Implementation**: `src/services/api/auth.service.ts:11`
+
+---
+
+### deleteAll
+
+Deletes all stored authentication files.
+
+**Signature**:
+
+```typescript
+deleteAll(): Promise<void>
+```
+
+**Example**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+// Delete all files with confirmation
+const clearAllAuth = async () => {
+  const response = await authFilesApi.list();
+  const count = response.files.length;
+
+  if (count === 0) {
+    console.log('No files to delete');
+    return;
+  }
+
+  if (confirm(`Delete all ${count} auth files? This cannot be undone.`)) {
+    try {
+      await authFilesApi.deleteAll();
+      console.log('All auth files deleted');
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  }
+};
+```
+
+**Endpoint**: `DELETE /v0/management/auth-files?all=true`
+
+**Implementation**: `src/services/api/auth.service.ts:13`
+
+---
+
+### download
+
+Downloads an authentication file.
+
+**Signature**:
+
+```typescript
+download(name: string): Promise<any>
+```
+
+<ParamField path="name" type="string" required>
+  Filename to download
+</ParamField>
+
+<ResponseField name="data" type="any">
+  Raw file data (format depends on file type)
+</ResponseField>
+
+**Example**:
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+const downloadFile = async (filename: string) => {
+  try {
+    const data = await authFilesApi.download(filename);
+    
+    // Create download link
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download failed:', error);
+  }
+};
+```
+
+**Endpoint**: `GET /v0/management/auth-files/download?name={filename}`
+
+**Implementation**: `src/services/api/auth.service.ts:15`
+
+---
+
+## Usage Patterns
+
+### Managing Auth Files
+
+```typescript
+import { authFilesApi } from '@/services/api/auth.service';
+
+class AuthManager {
+  // List all files with provider grouping
+  async listByProvider() {
+    const response = await authFilesApi.list();
+    
+    const grouped = response.files.reduce((acc, file) => {
+      if (!acc[file.provider]) {
+        acc[file.provider] = [];
+      }
+      acc[file.provider].push(file);
+      return acc;
+    }, {} as Record<string, AuthFile[]>);
+    
+    return grouped;
+  }
+  
+  // Upload with validation
+  async uploadWithValidation(file: File) {
+    const allowedExtensions = ['.har', '.txt', '.json'];
+    const ext = file.name.substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedExtensions.includes(ext)) {
+      throw new Error(`Invalid file type. Allowed: ${allowedExtensions.join(', ')}`);
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return await authFilesApi.upload(formData);
+  }
+  
+  // Delete old files (older than 30 days)
+  async deleteOldFiles() {
+    const response = await authFilesApi.list();
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    
+    const oldFiles = response.files.filter(file => {
+      const modifiedTime = new Date(file.modified).getTime();
+      return modifiedTime < thirtyDaysAgo;
+    });
+    
+    for (const file of oldFiles) {
+      await authFilesApi.deleteFile(file.filename);
+      console.log(`Deleted old file: ${file.filename}`);
+    }
+    
+    return oldFiles.length;
+  }
+}
+```
+
+### React Hook Example
+
+```typescript
+import { useState, useEffect } from 'react';
+import { authFilesApi } from '@/services/api/auth.service';
+import type { AuthFile } from '@/types';
+
+export function useAuthFiles() {
+  const [files, setFiles] = useState<AuthFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const loadFiles = async () => {
+    try {
+      setLoading(true);
+      const response = await authFilesApi.list();
+      setFiles(response.files || []);
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    await authFilesApi.upload(formData);
+    await loadFiles(); // Reload list
+  };
+  
+  const deleteFile = async (filename: string) => {
+    await authFilesApi.deleteFile(filename);
+    await loadFiles(); // Reload list
+  };
+  
+  useEffect(() => {
+    loadFiles();
+  }, []);
+  
+  return {
+    files,
+    loading,
+    error,
+    loadFiles,
+    uploadFile,
+    deleteFile
+  };
+}
+```
+
+---
+
+## File Formats
+
+### HAR Files (.har)
+
+HTTP Archive format exported from browser DevTools. Contains complete HTTP request/response data including cookies and headers.
+
+**How to export**:
+1. Open browser DevTools (F12)
+2. Go to Network tab
+3. Perform authentication flow
+4. Right-click → Save all as HAR with content
+
+**Example structure**:
+
+```json
+{
+  "log": {
+    "entries": [
+      {
+        "request": {
+          "url": "https://api.anthropic.com/v1/messages",
+          "headers": [
+            { "name": "cookie", "value": "sessionToken=abc123..." }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Text Files (.txt)
+
+Simple text format for API keys or tokens.
+
+**Example**:
+
+```
+sk-ant-api03-abc123def456...
+```
+
+### JSON Files (.json)
+
+Structured credential data.
+
+**Example**:
+
+```json
+{
+  "api_key": "sk-abc123",
+  "organization_id": "org-xyz",
+  "project_id": "proj-456"
+}
+```
+
+---
+
+## Error Handling
+
+**Common errors**:
+
+```typescript
+try {
+  await authFilesApi.upload(formData);
+} catch (error) {
+  const apiError = error as ApiError;
+  
+  if (apiError.status === 400) {
+    console.error('Invalid file format');
+  } else if (apiError.status === 413) {
+    console.error('File too large');
+  } else if (apiError.status === 401) {
+    console.error('Invalid management key');
+  } else {
+    console.error('Upload failed:', apiError.message);
+  }
+}
+```
+
+**File not found**:
+
+```typescript
+try {
+  await authFilesApi.deleteFile('nonexistent.har');
+} catch (error) {
+  if ((error as ApiError).status === 404) {
+    console.log('File not found (might already be deleted)');
+  }
+}
+```
+
+---
+
+## Type Definitions
+
+Complete type definitions from `src/types/authFile.ts` and `src/types/index.ts`:
+
+```typescript
+interface AuthFile {
+  filename: string;
+  provider: string;
+  provider_key: string;
+  size: number;
+  modified: string;
+}
+
+interface AuthFilesResponse {
+  files?: AuthFile[];
+  [key: string]: unknown;
+}
+```

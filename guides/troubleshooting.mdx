@@ -1,0 +1,771 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for ZeroLimit and CLI Proxy
+---
+
+## Connection Issues
+
+<AccordionGroup>
+
+<Accordion title="Connection Failed - Cannot reach server">
+
+**Symptoms**:
+- Login shows "Connection failed" error
+- Dashboard shows "Offline" status
+- Cannot access any features
+
+**Causes**:
+- CLI Proxy server is not running
+- Incorrect API Base URL
+- Firewall blocking connection
+- Port conflict
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Verify proxy is running">
+Go to **Settings** and check if the status shows "Running" (green checkmark).
+
+If stopped, click **Start** to launch the proxy.
+</Step>
+
+<Step title="Check API Base URL">
+The URL should match your setup:
+- **Local**: `http://localhost:8317`
+- **Remote**: `https://your-domain.com` or custom URL
+- No trailing slash
+- Include protocol (`http://` or `https://`)
+</Step>
+
+<Step title="Test direct connection">
+Open a browser and navigate to your API Base URL.
+
+You should see: `{"message": "CLI Proxy API Server"}` or a list of endpoints.
+
+If this fails:
+- Proxy is not running
+- Wrong URL
+- Firewall blocking
+</Step>
+
+<Step title="Check Windows Firewall">
+1. Open Windows Defender Firewall
+2. Click "Allow an app through firewall"
+3. Find or add `cli-proxy-api.exe`
+4. Enable both Private and Public networks
+5. Restart the proxy
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Login Failed - Invalid credentials">
+
+**Symptoms**:
+- "Login failed" error on login screen
+- "Invalid management key" message
+
+**Causes**:
+- Incorrect Management Key
+- `config.yaml` not configured
+- Mismatched credentials
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Locate config.yaml">
+Open your CLI Proxy installation folder and find `config.yaml`.
+
+If it doesn't exist:
+1. Look for `config-example.yaml`
+2. Rename it to `config.yaml`
+</Step>
+
+<Step title="Find the secret key">
+Open `config.yaml` in a text editor.
+
+Find the line:
+```yaml
+secret-key: your-key-here
+```
+
+This is your Management Key.
+</Step>
+
+<Step title="Copy the key exactly">
+Copy the entire key value after `secret-key:`
+
+Paste it into ZeroLimit's Management Key field.
+
+**Important**: No spaces before or after, copy exactly as shown.
+</Step>
+
+<Step title="Try logging in again">
+Enter:
+- **API Base URL**: `http://localhost:8317` (for local)
+- **Management Key**: The value from `config.yaml`
+- Check **Remember credentials**
+- Click **Login**
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Network error or server unreachable">
+
+**Symptoms**:
+- Dashboard shows "Check connection" warning
+- Random disconnections
+- Intermittent errors
+
+**Causes**:
+- Proxy crashed or stopped
+- Network connectivity issues
+- Proxy overloaded
+
+**Solutions**:
+
+1. **Check proxy status**: Go to Settings and verify it's still running
+2. **Restart proxy**: Stop and start the proxy from Settings
+3. **Check logs**: Look for error messages in proxy terminal/logs
+4. **Verify port**: Ensure no other application is using port 8317
+5. **Check resources**: Task Manager - ensure proxy isn't using excessive CPU/RAM
+6. **Update proxy**: Old versions may have stability issues
+
+</Accordion>
+
+</AccordionGroup>
+
+## Proxy Issues
+
+<AccordionGroup>
+
+<Accordion title="Proxy won't start">
+
+**Symptoms**:
+- Clicking Start button does nothing
+- Error message when starting
+- Server immediately stops after starting
+
+**Causes**:
+- Invalid executable path
+- Port already in use
+- Permissions issue
+- Corrupted installation
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Verify executable path">
+Settings > **Executable Path** should point to:
+- `cli-proxy-api.exe` (Standard)
+- `cli-proxy-api-plus.exe` (Plus)
+
+If incorrect, click **Browse** and select the correct file.
+</Step>
+
+<Step title="Check for existing instance">
+Open Task Manager (Ctrl+Shift+Esc):
+1. Go to **Details** tab
+2. Look for `cli-proxy-api.exe` or `cli-proxy-api-plus.exe`
+3. If found, right-click and **End task**
+4. Try starting again
+</Step>
+
+<Step title="Check port availability">
+Default port is 8317. To test:
+1. Open Command Prompt
+2. Run: `netstat -ano | findstr :8317`
+3. If output shows, port is in use
+
+Change port:
+1. Open `config.yaml` in proxy folder
+2. Change `port: 8317` to `port: 8318`
+3. Save and restart proxy
+4. Update login URL to `http://localhost:8318`
+</Step>
+
+<Step title="Run as Administrator">
+Some systems require elevated permissions:
+1. Close ZeroLimit
+2. Right-click ZeroLimit icon
+3. Select **Run as Administrator**
+4. Try starting proxy again
+</Step>
+
+<Step title="Reinstall proxy">
+If still failing:
+1. Download fresh copy from [GitHub Releases](https://github.com/router-for-me/CLIProxyAPI/releases)
+2. Extract to a new folder
+3. Update executable path in ZeroLimit Settings
+4. Start proxy
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Auto-download failed during onboarding">
+
+**Symptoms**:
+- Onboarding auto-download shows error
+- "Failed to download CLI Proxy" message
+- Download stalls or times out
+
+**Causes**:
+- Internet connectivity issues
+- GitHub API rate limit
+- Antivirus blocking download
+- Firewall restrictions
+
+**Solutions**:
+
+**Option 1: Retry after waiting**
+1. Close onboarding
+2. Wait 5-10 minutes (GitHub rate limit)
+3. Restart ZeroLimit and try again
+
+**Option 2: Manual download**
+1. Cancel auto-download
+2. Select **Manual Location** in onboarding
+3. Download manually:
+   - [CLIProxyAPI Standard](https://github.com/router-for-me/CLIProxyAPI/releases)
+   - [CLIProxyAPI Plus](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+4. Extract the download
+5. Browse to the executable in onboarding
+6. Complete setup
+
+**Option 3: Check antivirus**
+1. Temporarily disable antivirus
+2. Try auto-download again
+3. If successful, add exception for ZeroLimit
+4. Re-enable antivirus
+
+</Accordion>
+
+<Accordion title="Update failed or update stuck">
+
+**Symptoms**:
+- "Update failed" error after clicking Update Now
+- Update progress stuck
+- Proxy won't restart after update
+
+**Causes**:
+- Network timeout
+- Download interrupted
+- Proxy process locked
+- Antivirus quarantine
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Force stop the proxy">
+1. Open Task Manager
+2. End `cli-proxy-api.exe` process
+3. Wait 10 seconds
+4. Try update again
+</Step>
+
+<Step title="Clear stuck download">
+1. Navigate to proxy installation folder
+2. Look for temporary/incomplete files
+3. Delete any `.tmp` or `.download` files
+4. Try update again
+</Step>
+
+<Step title="Manual update">
+1. Download latest release from GitHub:
+   - [Standard version](https://github.com/router-for-me/CLIProxyAPI/releases)
+   - [Plus version](https://github.com/router-for-me/CLIProxyAPIPlus/releases)
+2. Stop proxy from ZeroLimit Settings
+3. Extract download
+4. Replace old executable with new one
+5. Start proxy from Settings
+</Step>
+
+<Step title="Verify update">
+Check version in Settings:
+- Should show new version number
+- Build date should be recent
+- "Update available" should disappear
+</Step>
+
+</Steps>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Provider Authentication Issues
+
+<AccordionGroup>
+
+<Accordion title="OAuth callback not detected">
+
+**Symptoms**:
+- Complete OAuth login in browser
+- ZeroLimit still shows "Waiting for authentication"
+- Never completes automatically
+
+**Causes**:
+- Callback URL detection failed
+- Browser security settings
+- Popup blocked
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Manual callback submission">
+1. Complete the OAuth flow in your browser
+2. After authorization, look at the browser address bar
+3. Copy the entire URL (should contain `code=` or `state=`)
+4. In ZeroLimit, paste URL in "Paste callback URL" field
+5. Click **Verify**
+</Step>
+
+<Step title="Try different browser">
+Some browsers block callback detection:
+1. Click **Cancel** in ZeroLimit
+2. Try adding provider again
+3. When OAuth page opens, copy URL
+4. Open in different browser (Chrome, Edge, Firefox)
+5. Complete login
+6. Copy final URL and paste in ZeroLimit
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Provider shows error after authentication">
+
+**Symptoms**:
+- Account appears in Connected Accounts
+- Shows error status or red indicator
+- Quota page shows "Token invalid"
+
+**Causes**:
+- Token expired immediately
+- Provider session issue
+- Incomplete authorization
+
+**Solutions**:
+
+1. **Delete and re-authenticate**:
+   - Go to Providers page
+   - Click trash icon for the account
+   - Clear browser cookies for provider domain
+   - Add account again
+
+2. **Check provider account status**:
+   - Log into provider's website
+   - Verify account is active
+   - Check for any security alerts
+   - Ensure subscription is valid (if applicable)
+
+3. **Try incognito/private mode**:
+   - Open provider OAuth in private browser
+   - May avoid session conflicts
+
+</Accordion>
+
+<Accordion title="GitHub Copilot device code not working">
+
+**Symptoms**:
+- Enter device code on GitHub
+- Authorization seems successful
+- ZeroLimit never detects completion
+
+**Causes**:
+- Polling timeout
+- Network delay
+- GitHub authorization delay
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Wait longer">
+Device code flow can take 30-60 seconds:
+1. After entering code on GitHub
+2. Click "Authorize" on GitHub
+3. Wait on ZeroLimit screen for up to 2 minutes
+4. Don't click Cancel too early
+</Step>
+
+<Step title="Manual callback (if available)">
+1. After GitHub authorization
+2. Look for callback URL
+3. Paste in ZeroLimit callback field
+4. Click Verify
+</Step>
+
+<Step title="Retry with new code">
+1. Click Cancel in ZeroLimit
+2. Click GitHub Copilot provider again
+3. New device code generates
+4. Try authorization again
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Gemini CLI requires project ID error">
+
+**Symptoms**:
+- Connection fails with project error
+- "Invalid project" message
+- "Project not found"
+
+**Causes**:
+- Wrong project ID
+- Project doesn't have required APIs enabled
+- Auto-select failed
+
+**Solutions**:
+
+**Option 1: Use auto-select**
+1. Leave Project ID field empty
+2. Click **Auto Select**
+3. ZeroLimit will choose appropriate project
+
+**Option 2: Find correct project ID**
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Select or create a project
+3. Copy the Project ID (not project name)
+4. Enable these APIs:
+   - Generative Language API
+   - Vertex AI API
+5. Enter Project ID in ZeroLimit
+
+**Option 3: Create new project**
+1. Create new Google Cloud project
+2. Enable required APIs
+3. Use that project ID in ZeroLimit
+
+</Accordion>
+
+</AccordionGroup>
+
+## Quota Monitoring Issues
+
+<AccordionGroup>
+
+<Accordion title="Quota shows 'Token invalid or expired'">
+
+**Symptoms**:
+- Quota page shows error for an account
+- "Token expired, please re-authenticate"
+- 401 or 403 error
+
+**Causes**:
+- Authentication token expired
+- Provider revoked access
+- Account password changed
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Re-authenticate the account">
+1. Go to **Providers** page
+2. Find the account showing error
+3. Click the trash icon to delete it
+4. Add the provider again using OAuth
+5. Complete authentication
+</Step>
+
+<Step title="Check provider account">
+1. Log into provider's website directly
+2. Check for security alerts
+3. Verify no suspicious activity
+4. Check if you changed password recently
+5. Review authorized applications list
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Quota stuck on loading">
+
+**Symptoms**:
+- Quota page shows loading spinner indefinitely
+- One or more accounts never finish loading
+- Refresh doesn't help
+
+**Causes**:
+- Provider API timeout
+- Network issues
+- Proxy overloaded
+- Provider API down
+
+**Solutions**:
+
+1. **Wait and retry**: Provider APIs can be slow, wait 30 seconds then click refresh
+2. **Check provider status**: Visit provider's status page
+3. **Restart proxy**: Go to Settings and restart the proxy
+4. **Skip problematic account**: Delete it if consistently failing
+5. **Check logs**: Review proxy logs for error messages
+
+</Accordion>
+
+<Accordion title="Rate limit exceeded error">
+
+**Symptoms**:
+- "Rate limit exceeded" when checking quota
+- 429 error on refresh
+- Quota won't update
+
+**Causes**:
+- Too many quota checks in short time
+- Provider API rate limits
+
+**Solutions**:
+
+1. **Wait before refreshing**: Wait 2-5 minutes between quota refreshes
+2. **Don't spam refresh**: Use automatic refresh instead of manual
+3. **Check less frequently**: Provider APIs limit quota endpoint calls
+4. **Spread out checks**: If multiple accounts, refresh one at a time
+
+</Accordion>
+
+</AccordionGroup>
+
+## Dashboard and Usage Statistics
+
+<AccordionGroup>
+
+<Accordion title="Dashboard shows 'Usage statistics disabled'">
+
+**Symptoms**:
+- Dashboard shows message about disabled statistics
+- No usage charts or data
+- Graphs are empty
+
+**Causes**:
+- `usage-statistics-enabled` is `false` in config
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Enable via Settings UI">
+1. Go to **Settings** page
+2. Find **Usage Statistics** card
+3. Toggle **Enabled** to ON
+4. Wait 5 seconds for config to update
+5. Refresh Dashboard page
+</Step>
+
+<Step title="Enable via config file">
+1. Stop the proxy
+2. Open `config.yaml` in proxy folder
+3. Find `usage-statistics-enabled: false`
+4. Change to `usage-statistics-enabled: true`
+5. Save file
+6. Start proxy
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="Dashboard shows 'No data' despite usage">
+
+**Symptoms**:
+- Usage statistics enabled
+- Charts show "No data"
+- You know API calls were made
+
+**Causes**:
+- Statistics just enabled (no historical data)
+- Database not initialized
+- Proxy needs restart
+
+**Solutions**:
+
+1. **Wait for new data**: Statistics only track future usage, not historical
+2. **Make test requests**: Use connected accounts to generate some API traffic
+3. **Restart proxy**: Stop and start from Settings
+4. **Check date range**: Dashboard may be filtering by time period
+5. **Verify API calls**: Ensure calls are actually going through proxy
+
+</Accordion>
+
+</AccordionGroup>
+
+## Installation and Setup Issues
+
+<AccordionGroup>
+
+<Accordion title="Onboarding screen appears every launch">
+
+**Symptoms**:
+- Onboarding wizard shows on every app start
+- Can't skip or complete setup
+- Progress not saved
+
+**Causes**:
+- Setup not completed
+- State not persisted
+- Storage permission issue
+
+**Solutions**:
+
+1. **Complete onboarding fully**:
+   - Choose Auto Download or Manual Location
+   - Set a Management Key
+   - Click **Finish Setup**
+   - Wait for completion confirmation
+
+2. **Check permissions**: Ensure app has write access to its data folder
+
+3. **Reinstall if needed**: Uninstall and reinstall ZeroLimit
+
+</Accordion>
+
+<Accordion title="'Plus' providers not available">
+
+**Symptoms**:
+- Kiro and GitHub Copilot show "Plus" badge
+- Cannot add these providers
+- Locked icon displayed
+
+**Causes**:
+- Using Standard version of CLI Proxy
+- Need Plus version for these providers
+
+**Solutions**:
+
+<Steps>
+
+<Step title="Switch to Plus version">
+1. Go to **Settings** page
+2. Find **Switch Version** section
+3. Click **Switch to Plus**
+4. Wait for download and restart
+</Step>
+
+<Step title="Verify switch">
+- Executable Path should show `cli-proxy-api-plus.exe`
+- "Currently using Plus version" text appears
+- Kiro and Copilot now available in Providers
+</Step>
+
+</Steps>
+
+</Accordion>
+
+<Accordion title="ZeroLimit won't start or crashes on launch">
+
+**Symptoms**:
+- App window doesn't open
+- Crashes immediately
+- Error dialog on startup
+
+**Causes**:
+- Corrupted installation
+- Missing dependencies
+- Antivirus blocking
+- Corrupted config
+
+**Solutions**:
+
+1. **Check antivirus**: Add exception for ZeroLimit.exe
+2. **Run as Administrator**: Right-click icon, select "Run as Administrator"
+3. **Clear app data**:
+   - Close ZeroLimit completely
+   - Navigate to `%APPDATA%/ZeroLimit` (Windows)
+   - Rename or delete the folder
+   - Launch ZeroLimit again
+4. **Reinstall**: 
+   - Uninstall ZeroLimit
+   - Download latest version
+   - Install fresh
+
+</Accordion>
+
+</AccordionGroup>
+
+## Performance Issues
+
+<AccordionGroup>
+
+<Accordion title="Proxy using high CPU or memory">
+
+**Symptoms**:
+- Proxy process using >50% CPU
+- High memory usage (>500MB)
+- System slowdown
+- ZeroLimit becomes unresponsive
+
+**Causes**:
+- Too many concurrent requests
+- Memory leak in old version
+- Large logs
+- Too many connected accounts
+
+**Solutions**:
+
+1. **Update proxy**: Older versions had memory issues
+2. **Restart proxy**: Clears memory leaks temporarily
+3. **Clear logs**: Delete log files in proxy folder
+4. **Reduce polling**: Don't refresh quota too frequently
+5. **Limit accounts**: If you have 20+ accounts, consider splitting across multiple proxy instances
+6. **Disable logging**: Set `logging-to-file: false` in config
+
+</Accordion>
+
+<Accordion title="ZeroLimit UI slow or laggy">
+
+**Symptoms**:
+- UI freezes or stutters
+- Slow page transitions
+- Delayed button clicks
+
+**Causes**:
+- Many connected accounts
+- Large usage dataset
+- System resources
+
+**Solutions**:
+
+1. **Use Card view**: Compact view is faster with many accounts
+2. **Filter providers**: View one provider at a time
+3. **Disable animations**: System display settings
+4. **Close other apps**: Free up system resources
+5. **Restart ZeroLimit**: Clear UI state
+
+</Accordion>
+
+</AccordionGroup>
+
+## Getting Help
+
+If your issue isn't covered here:
+
+1. **Check proxy logs**: Located in proxy installation folder
+2. **Check ZeroLimit logs**: Press F12 for developer console
+3. **Verify versions**: Note your ZeroLimit and proxy versions
+4. **Visit GitHub**: Report issues on the project repository
+5. **Community support**: Check discussions and existing issues
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Accounts" icon="user-plus" href="/guides/adding-accounts">
+    Connect provider accounts after resolving issues
+  </Card>
+  <Card title="Monitor Usage" icon="chart-line" href="/guides/monitoring-usage">
+    Track quota and API usage across providers
+  </Card>
+</CardGroup>

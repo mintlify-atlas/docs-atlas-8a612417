@@ -1,0 +1,236 @@
+---
+title: Architecture Overview
+description: Comprehensive overview of ZeroLimit's architecture using Tauri, React, and Rust
+---
+
+# Architecture Overview
+
+ZeroLimit is a cross-platform desktop application built with a modern hybrid architecture combining **Tauri 2**, **React 19**, and **Rust**. This architecture provides native performance, security, and a rich user interface.
+
+## Technology Stack
+
+### Frontend
+- **React 19.1.0** - Modern UI library with React Compiler enabled
+- **TypeScript 5.8** - Type-safe development
+- **Vite** - Fast build tool and dev server
+- **TailwindCSS 4.1** - Utility-first styling
+- **Zustand 5.0** - Lightweight state management
+- **React Router 7.10** - Client-side routing
+- **Axios** - HTTP client for API communication
+- **i18next** - Internationalization
+
+### Backend
+- **Tauri 2** - Cross-platform desktop framework
+- **Rust** - Systems programming language
+- **Tokio** - Async runtime
+- **Reqwest** - HTTP client
+- **Serde** - Serialization/deserialization
+
+### UI Components
+- **Radix UI** - Accessible component primitives
+- **Lucide React** - Icon library
+- **Recharts** - Data visualization
+- **Motion** - Animation library
+- **Sonner** - Toast notifications
+
+## Architectural Pattern
+
+ZeroLimit follows a **layered architecture** with clear separation between frontend and backend:
+
+```
+┌─────────────────────────────────────────────────────┐
+│               React Frontend (WebView)              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │ Features │  │  Shared  │  │   Services       │ │
+│  │  Pages   │  │Components│  │  API / Storage   │ │
+│  └────┬─────┘  └────┬─────┘  └────────┬─────────┘ │
+│       │             │                 │           │
+│       └─────────────┴─────────────────┘           │
+└──────────────────────┬──────────────────────────────┘
+                       │ Tauri IPC Bridge
+                       │ (invoke/events)
+┌──────────────────────┴──────────────────────────────┐
+│               Rust Backend (Tauri)                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │ Commands │  │  State   │  │   Plugins        │ │
+│  │ Handlers │  │ Management│  │ Shell/FS/Dialog  │ │
+│  └──────────┘  └──────────┘  └──────────────────┘ │
+│                                                     │
+│  System Integration (Process, Tray, Updater)       │
+└─────────────────────────────────────────────────────┘
+```
+
+## Communication Layer: Tauri IPC
+
+The frontend and backend communicate through **Tauri's IPC (Inter-Process Communication)** bridge:
+
+### Frontend → Backend (Commands)
+
+```typescript
+// Frontend invokes Rust commands
+import { invoke } from '@tauri-apps/api/core';
+
+const pid = await invoke<number>('start_cli_proxy', { 
+  exePath: '/path/to/proxy' 
+});
+```
+
+### Backend Command Handlers
+
+```rust
+// Rust command handler
+#[command]
+pub async fn start_cli_proxy(exe_path: String) -> CommandResult<u32> {
+    // Implementation
+}
+```
+
+### Backend → Frontend (Events)
+
+```typescript
+// Frontend listens to backend events
+window.addEventListener('unauthorized', () => {
+  // Handle auth error
+});
+```
+
+## Core Modules
+
+### Backend Modules (`src-tauri/src/`)
+
+| Module | Purpose |
+|--------|--------|
+| `commands/` | Tauri command handlers (CLI proxy, download, utils, version) |
+| `state.rs` | Global application state management |
+| `tray.rs` | System tray integration |
+| `error.rs` | Error handling and types |
+| `lib.rs` | Application entry point and setup |
+| `main.rs` | Binary entry point |
+
+### Frontend Modules (`src/`)
+
+| Module | Purpose |
+|--------|--------|
+| `features/` | Feature-based modules (auth, dashboard, quota, settings, etc.) |
+| `shared/` | Shared components, hooks, and utilities |
+| `services/` | API clients and external service integration |
+| `layouts/` | Page layout components |
+| `router/` | Routing configuration |
+| `i18n/` | Internationalization setup |
+| `types/` | TypeScript type definitions |
+| `constants/` | Application constants |
+
+## Build System
+
+### Development Workflow
+
+```bash
+# Frontend only (Vite dev server)
+pnpm run dev          # http://localhost:1420
+
+# Full desktop app
+pnpm run tauri dev    # Tauri window with hot reload
+```
+
+### Production Build
+
+```bash
+# Build frontend bundle
+pnpm run build        # → dist/
+
+# Build desktop application
+pnpm run tauri build  # → src-tauri/target/release/
+```
+
+### Build Pipeline
+
+1. **TypeScript Compilation** - Type checking with `tsc`
+2. **Vite Bundle** - Frontend assets → `dist/`
+3. **Rust Compilation** - Backend binary with embedded frontend
+4. **Platform Bundling** - Native installers (.exe, .dmg, .deb, .AppImage)
+5. **Update Artifacts** - Auto-updater manifest generation
+
+## Configuration Files
+
+### Tauri Configuration (`src-tauri/tauri.conf.json`)
+
+```json
+{
+  "productName": "ZeroLimit",
+  "identifier": "com.0xtbug.zero-limit",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/0xtbug/zero-limit/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
+```
+
+### Vite Configuration (`vite.config.ts`)
+
+- Port: `1420` (fixed for Tauri)
+- HMR: WebSocket on `1421`
+- Path alias: `@` → `src/`
+- Plugins: React with compiler, TailwindCSS
+
+## Key Features
+
+### 1. CLI Proxy Management
+- Start/stop external CLI proxy processes
+- Process lifecycle management
+- Cross-platform process handling (Windows `taskkill`, Unix `pkill`)
+
+### 2. System Tray Integration
+- Always-available system tray icon
+- Run in background mode
+- Quick access menu
+
+### 3. Auto-Updater
+- GitHub releases integration
+- Platform-specific update artifacts
+- Silent background updates
+
+### 4. Multi-Provider Support
+- Anthropic Claude
+- GitHub Copilot
+- Google Gemini
+- Custom API providers
+
+### 5. Usage Tracking
+- Real-time quota monitoring
+- Historical usage statistics
+- Provider-specific metrics
+
+## Security Model
+
+### Tauri Security Features
+- **CSP (Content Security Policy)** - Configured in `tauri.conf.json`
+- **IPC Allowlist** - Only registered commands are accessible
+- **Process Isolation** - Frontend runs in sandboxed WebView
+- **Native API Access** - Controlled through Tauri plugins
+
+### Data Storage
+- **Local Storage** - Configuration and cache
+- **Secure Credentials** - Management key stored securely
+- **No Secrets in Source** - All sensitive data from user input
+
+## Platform Support
+
+| Platform | Support | Notes |
+|----------|---------|-------|
+| Windows | ✅ | Primary platform, native installer |
+| macOS | ✅ | `.app` bundle with code signing |
+| Linux | ✅ | `.deb`, `.AppImage`, `.rpm` |
+
+## Next Steps
+
+- [Frontend Structure](/technical/frontend-structure) - Deep dive into React architecture
+- [Backend Structure](/technical/backend-structure) - Rust/Tauri implementation details

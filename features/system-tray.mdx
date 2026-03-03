@@ -1,0 +1,341 @@
+---
+title: "System Tray Integration"
+description: "Access ZeroLimit from your system tray with background operation support"
+icon: "window-minimize"
+---
+
+## Overview
+
+ZeroLimit integrates seamlessly with your system tray, allowing the application to run in the background while the CLI Proxy continues monitoring your AI quotas. This ensures uninterrupted service without keeping the main window open.
+
+<Frame>
+  <img src="/images/system-tray.png" alt="System Tray Icon" />
+</Frame>
+
+## System Tray Features
+
+<CardGroup cols={2}>
+  <Card title="Background Operation" icon="circle-play">
+    Keep CLI Proxy running even when the window is closed
+  </Card>
+  <Card title="Quick Access" icon="bolt">
+    Open ZeroLimit instantly from the tray icon
+  </Card>
+  <Card title="Status Indicator" icon="signal">
+    Visual indication of application status
+  </Card>
+  <Card title="Minimal Resource Usage" icon="gauge-simple">
+    Low memory footprint when minimized to tray
+  </Card>
+</CardGroup>
+
+## Accessing the System Tray
+
+### Minimize to Tray
+
+When you close the ZeroLimit window:
+
+<Tabs>
+  <Tab title="Run in Background ON">
+    - Application minimizes to system tray
+    - CLI Proxy continues running
+    - Tray icon appears in taskbar notification area
+    - Window closes but app remains active
+  </Tab>
+  
+  <Tab title="Run in Background OFF">
+    - Application fully exits
+    - CLI Proxy stops
+    - Tray icon disappears
+    - All processes terminate
+  </Tab>
+</Tabs>
+
+### Enabling Background Mode
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to **Settings** from the main menu
+  </Step>
+  <Step title="Find CLI Proxy Section">
+    Scroll to the **CLI Proxy** settings card
+  </Step>
+  <Step title="Toggle Run in Background">
+    Enable the **Run in Background** switch
+  </Step>
+  <Step title="Close Window">
+    Close ZeroLimit - it now minimizes to tray instead of exiting
+  </Step>
+</Steps>
+
+<Info>
+  The "Run in Background" setting is persisted. Once enabled, it remains active until you toggle it off.
+</Info>
+
+## Tray Icon Menu
+
+Right-click (or left-click) the ZeroLimit tray icon to access:
+
+### Open ZeroLimit
+
+- **Action**: Restores the main window
+- **Keyboard**: Left-click tray icon
+- **Effect**: Brings window to front and focuses it
+
+### Quit
+
+- **Action**: Completely exits ZeroLimit
+- **Effect**: 
+  - Stops CLI Proxy server
+  - Closes main window
+  - Removes tray icon
+  - Terminates all processes
+
+<Warning>
+  Choosing "Quit" from the tray menu will stop the CLI Proxy, which may interrupt any active monitoring or quota tracking.
+</Warning>
+
+## Tray Icon Behavior
+
+### Windows
+
+- **Location**: Bottom-right taskbar notification area
+- **Left Click**: Opens ZeroLimit window
+- **Right Click**: Shows context menu
+- **Tooltip**: "ZeroLimit - API Quota Manager"
+
+### macOS
+
+- **Location**: Top-right menu bar
+- **Click**: Shows context menu with options
+- **Tooltip**: "ZeroLimit - API Quota Manager"
+
+### Linux
+
+- **Location**: Varies by desktop environment (typically top or bottom panel)
+- **Click**: Shows context menu
+- **Compatibility**: Works with GNOME Shell, KDE Plasma, XFCE, and others
+
+<Note>
+  Tray icon appearance adapts to your system theme (light or dark mode).
+</Note>
+
+## Background Operation Details
+
+### What Runs in Background?
+
+When minimized to tray:
+
+- ✅ **CLI Proxy Server**: Continues running and serving API requests
+- ✅ **Tauri Backend**: Minimal Rust process for tray management
+- ❌ **UI Rendering**: React frontend is paused
+- ❌ **Animations**: No UI animations running
+
+### Resource Usage
+
+Typical memory usage when in system tray:
+
+| Component | Memory |
+|-----------|--------|
+| Tauri App | ~10-20 MB |
+| CLI Proxy | ~30-50 MB |
+| **Total** | **~40-70 MB** |
+
+Compare to main window open: ~100-150 MB
+
+<Tip>
+  Running in the tray uses significantly less RAM than keeping the window open, making it ideal for low-resource systems.
+</Tip>
+
+## Use Cases
+
+### Continuous Monitoring
+
+**Scenario**: You want ZeroLimit to track quotas all day without keeping a window open.
+
+<Steps>
+  <Step title="Enable Auto Start">
+    Turn on **Auto Start** in Settings so CLI Proxy launches on boot
+  </Step>
+  <Step title="Enable Run in Background">
+    Turn on **Run in Background** to allow tray operation
+  </Step>
+  <Step title="Close Window">
+    Close ZeroLimit - it minimizes to tray
+  </Step>
+  <Step title="Check Periodically">
+    Click tray icon to open and view quota updates
+  </Step>
+</Steps>
+
+### Development Workflow
+
+**Scenario**: You're developing with AI tools and need quotas monitored without distraction.
+
+- Minimize ZeroLimit to tray
+- Focus on your IDE or terminal
+- CLI Proxy intercepts API calls
+- Open ZeroLimit from tray to check usage
+- Close again to continue coding
+
+### Server Management
+
+**Scenario**: You're running CLI Proxy as a service on a workstation.
+
+- Enable **Auto Start** and **Run in Background**
+- ZeroLimit starts with system
+- Minimizes to tray automatically
+- CLI Proxy serves API requests to other machines
+- Open UI only when management is needed
+
+## Tray Icon Status
+
+### Visual Indicators
+
+While the tray icon itself is static, the tooltip and menu provide status information:
+
+- **Tooltip**: "ZeroLimit - API Quota Manager"
+- **Menu**: Displays "Open ZeroLimit" and "Quit" options
+
+### Future Enhancements
+
+Planned features for system tray:
+- 🔄 Animated icon when fetching quotas
+- ⚠️ Warning icon when quota is low
+- 🔴 Red badge when provider is suspended
+- 📊 Quick quota preview in tray menu
+
+<Info>
+  Feature requests and feedback are welcome on the GitHub repository.
+</Info>
+
+## Platform-Specific Notes
+
+### Windows 11
+
+- Tray icon appears in "hidden icons" overflow by default
+- **To pin**: Drag icon from overflow to main taskbar
+- Supports dark/light mode auto-switching
+
+### Windows 10
+
+- Tray icon behavior is similar to Windows 11
+- Check "Show hidden icons" if not visible
+- Settings → Personalization → Taskbar to customize
+
+### macOS
+
+- Menu bar integration is native
+- Icon respects system appearance (light/dark)
+- Supports right-click context menu
+
+### Linux
+
+- Compatibility with most desktop environments
+- GNOME Shell: Uses AppIndicator extension
+- KDE Plasma: Native system tray support
+- XFCE/LXDE: Standard tray integration
+
+<Note>
+  On some Linux distributions, you may need to install `libappindicator` for tray support.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Tray icon not appearing" icon="circle-question">
+    **Solutions**:
+    - Ensure "Run in Background" is enabled in Settings
+    - Check if system tray is enabled in your OS settings
+    - Restart ZeroLimit after toggling the setting
+    - On Linux, install `libappindicator3` package
+  </Accordion>
+  
+  <Accordion title="Can't open window from tray" icon="window-restore">
+    **Solutions**:
+    - Try right-clicking the icon instead of left-clicking
+    - Select "Open ZeroLimit" from the menu
+    - Quit and restart the application
+    - Check if window is hidden behind other windows (Alt+Tab)
+  </Accordion>
+  
+  <Accordion title="Tray icon disappears after closing" icon="eye-slash">
+    **Solutions**:
+    - Verify "Run in Background" is enabled
+    - Check if setting was saved (restart and verify)
+    - Ensure CLI Proxy is running before closing
+    - Review Windows notification settings (may be hiding icon)
+  </Accordion>
+  
+  <Accordion title="CLI Proxy stops when minimized" icon="server">
+    **Solutions**:
+    - Enable "Run in Background" in Settings
+    - Don't use "Quit" from tray menu (use window close instead)
+    - Verify "Auto Start" is enabled if using on startup
+    - Check task manager to confirm process is still running
+  </Accordion>
+</AccordionGroup>
+
+## Keyboard Shortcuts
+
+While in system tray mode:
+
+| Action | Shortcut |
+|--------|----------|
+| Open window | Left-click tray icon |
+| Show menu | Right-click tray icon |
+| Quit app | Select "Quit" from menu |
+
+<Tip>
+  Create a custom keyboard shortcut in your OS to open ZeroLimit from anywhere, even when in the tray.
+</Tip>
+
+## Best Practices
+
+<Steps>
+  <Step title="Enable Both Settings">
+    Turn on both **Auto Start** and **Run in Background** for seamless operation
+  </Step>
+  <Step title="Pin Tray Icon">
+    Pin the ZeroLimit icon to your main taskbar/menu bar for quick access
+  </Step>
+  <Step title="Check Periodically">
+    Open from tray daily to review quota usage and ensure monitoring is active
+  </Step>
+  <Step title="Use Quit Sparingly">
+    Only use "Quit" when you truly want to stop the CLI Proxy, not just close the window
+  </Step>
+</Steps>
+
+## Implementation Details
+
+ZeroLimit's system tray is built with:
+
+- **Tauri v2 Tray API**: Native system tray integration
+- **Platform-specific icons**: Optimized for each OS
+- **Rust backend**: Minimal resource footprint
+- **Event handling**: Efficient click and menu interactions
+
+### Source Code Reference
+
+The tray implementation can be found at:
+```
+src-tauri/src/tray.rs
+```
+
+Key features:
+- Menu creation with "Open" and "Quit" items
+- Left-click handler to restore window
+- Right-click menu display
+- Platform-agnostic icon handling
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Auto-Updates" icon="download" href="/features/auto-updates">
+    Learn about ZeroLimit's automatic update system
+  </Card>
+  <Card title="Settings" icon="gear" href="/configuration/settings">
+    Configure all ZeroLimit preferences
+  </Card>
+</CardGroup>

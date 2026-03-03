@@ -1,0 +1,387 @@
+---
+title: "Auto-Update Functionality"
+description: "Keep ZeroLimit and CLI Proxy up-to-date with automatic updates"
+icon: "download"
+---
+
+## Overview
+
+ZeroLimit features a comprehensive auto-update system that keeps both the desktop application and the CLI Proxy server current with the latest features, security patches, and bug fixes. Updates are checked automatically and can be installed with a single click.
+
+<Frame>
+  <img src="/images/auto-update.png" alt="Auto-Update Interface" />
+</Frame>
+
+## Desktop Application Updates
+
+ZeroLimit uses Tauri's built-in updater for seamless desktop app updates.
+
+### Update Check Process
+
+<Steps>
+  <Step title="Automatic Check">
+    ZeroLimit checks for updates periodically in the background
+  </Step>
+  <Step title="Notification">
+    When an update is available, a toast notification appears
+  </Step>
+  <Step title="User Choice">
+    Click "Update Now" in the notification or check manually in the About page
+  </Step>
+  <Step title="Download & Install">
+    Update downloads in background, then installs and relaunches automatically
+  </Step>
+</Steps>
+
+### Manual Update Check
+
+To manually check for ZeroLimit updates:
+
+1. Navigate to **About** page from the main menu
+2. Click **Check for Updates** button
+3. If an update is available:
+   - Version number is displayed (e.g., "v1.2.0")
+   - Click **Download and Install**
+4. If up-to-date:
+   - Green checkmark with "You're on the latest version" message
+
+<Info>
+  The About page shows your current version number and build information.
+</Info>
+
+## CLI Proxy Updates
+
+The CLI Proxy server has a separate update system managed through ZeroLimit's Settings page.
+
+### Version Detection
+
+ZeroLimit automatically detects:
+- **Current Installed Version**: The version currently running
+- **Build Date**: When the current executable was compiled
+- **Latest Remote Version**: The newest version available on GitHub
+
+### Checking for Proxy Updates
+
+<Steps>
+  <Step title="Open Settings">
+    Go to **Settings** → **CLI Proxy** section
+  </Step>
+  <Step title="Click Check for Update">
+    Press the **Check for Update** button
+  </Step>
+  <Step title="Review Information">
+    Version info displays:
+    - Current version (e.g., "v2.5.3")
+    - Build date (e.g., "Dec 15, 2024")
+    - Latest available version if newer
+  </Step>
+  <Step title="Update if Available">
+    If an update exists, the **Update Now** button becomes visible
+  </Step>
+</Steps>
+
+### Update Process
+
+When you click **Update Now** for CLI Proxy:
+
+1. **Server Stops**: Current CLI Proxy server is gracefully stopped
+2. **Download**: Latest version is fetched from GitHub releases
+3. **Extract**: Executable is extracted to the same directory
+4. **Replace**: Old executable is replaced with new one
+5. **Restart**: Server automatically restarts with new version
+
+<Note>
+  Updates are downloaded from official GitHub repositories:
+  - Standard: `router-for-me/CLIProxyAPI`
+  - Plus: `router-for-me/CLIProxyAPIPlus`
+</Note>
+
+### Version Comparison
+
+ZeroLimit uses semantic versioning to determine if an update is needed:
+
+- **Major.Minor.Patch** format (e.g., `2.5.3`)
+- Compares each segment numerically
+- Only prompts if remote version is newer
+- Example: `2.5.4` > `2.5.3` → Update available
+
+## Switching Between Standard and Plus
+
+ZeroLimit allows switching between CLI Proxy versions without manual downloads:
+
+<Tabs>
+  <Tab title="Standard to Plus">
+    ### Upgrade to Plus
+    
+    1. In **Settings** → **CLI Proxy**, find "Switch Version"
+    2. Current status shows "Currently using Standard version"
+    3. Click **Switch to Plus**
+    4. ZeroLimit will:
+       - Stop the Standard server
+       - Download CLI Proxy Plus from GitHub
+       - Extract to the same directory
+       - Update the executable path
+       - Start the Plus server
+    5. Unlocks Plus-only providers (Copilot, Kiro)
+  </Tab>
+  
+  <Tab title="Plus to Standard">
+    ### Downgrade to Standard
+    
+    1. In **Settings** → **CLI Proxy**, find "Switch Version"
+    2. Current status shows "Currently using Plus version"
+    3. Click **Switch to Standard**
+    4. ZeroLimit will:
+       - Stop the Plus server
+       - Download CLI Proxy Standard from GitHub
+       - Extract to the same directory
+       - Update the executable path
+       - Start the Standard server
+    5. Plus-only providers will be locked again
+  </Tab>
+</Tabs>
+
+<Info>
+  Version switching checks for existing alternates in the same folder before downloading, saving bandwidth if you've previously used both versions.
+</Info>
+
+## Update Notifications
+
+### Desktop App Update Toast
+
+When a ZeroLimit update is detected:
+
+```
+🔔 Update Available
+Version X.X.X is available.
+[Update Now]  [Dismiss]
+```
+
+- **Duration**: 10 seconds (auto-dismisses)
+- **Action Button**: "Update Now" starts download
+- **Position**: Bottom-right corner
+
+### CLI Proxy Update Indicator
+
+In the Settings page:
+
+- **Current version** displays in gray
+- **Latest version** shows in green with arrow (→)
+- **Update Now** button highlighted in primary color
+- **Checking...** spinner during version check
+
+## Update Status States
+
+### Desktop App
+
+| State | Description | UI |
+|-------|-------------|----|
+| **Idle** | No check performed | "Check for Updates" button |
+| **Checking** | Querying update server | Spinner + "Checking..." |
+| **Available** | Update found | Version display + "Download and Install" |
+| **Downloading** | Update in progress | Progress bar (0-100%) |
+| **Ready** | Downloaded, installing | "Restarting..." message |
+| **Up-to-date** | No update needed | Green checkmark + "Latest version" |
+| **Error** | Update failed | Red error message |
+
+### CLI Proxy
+
+| State | Description | UI |
+|-------|-------------|----|
+| **Idle** | No check performed | "Check for Update" button |
+| **Checking** | Querying GitHub API | Spinner + "Checking..." |
+| **Available** | Update found | Latest version shown, "Update Now" button |
+| **Updating** | Downloading and installing | Spinner + "Updating..." |
+| **Switching** | Changing version | Spinner + "Switching..." |
+| **Error** | Update failed | Toast error notification |
+
+## Platform-Specific Behavior
+
+### Windows
+
+- **Desktop Updates**: `.msi` installer downloaded and executed
+- **CLI Proxy Updates**: `.zip` file extracted with `cli-proxy-api.exe`
+- **Permissions**: May require administrator approval for installer
+- **Path Handling**: Backslashes (`\`) in file paths
+
+### macOS
+
+- **Desktop Updates**: `.dmg` or `.app.tar.gz` downloaded
+- **CLI Proxy Updates**: `.tar.gz` extracted with `cli-proxy-api` binary
+- **Permissions**: Gatekeeper approval for first run
+- **Path Handling**: Forward slashes (`/`) in file paths
+
+### Linux
+
+- **Desktop Updates**: `.AppImage` or `.deb` downloaded
+- **CLI Proxy Updates**: `.tar.gz` extracted with `cli-proxy-api` binary
+- **Permissions**: Executable bit set automatically
+- **Path Handling**: Forward slashes (`/`) in file paths
+
+<Tip>
+  On Linux, ensure you have `libappindicator3-dev` installed for full Tauri updater support.
+</Tip>
+
+## Update Configuration
+
+### Update Endpoints
+
+- **Desktop App**: Tauri updater endpoint (configured in `tauri.conf.json`)
+- **CLI Proxy**: GitHub Releases API
+  - Standard: `https://api.github.com/repos/router-for-me/CLIProxyAPI/releases/latest`
+  - Plus: `https://api.github.com/repos/router-for-me/CLIProxyAPIPlus/releases/latest`
+
+### Update Channels
+
+Current: **Stable** (default)
+
+Future versions may include:
+- **Beta**: Early access to new features
+- **Nightly**: Daily builds for testing
+
+## Troubleshooting Updates
+
+<AccordionGroup>
+  <Accordion title="Desktop update fails to download" icon="cloud-arrow-down">
+    **Solutions**:
+    - Check your internet connection
+    - Verify firewall allows Tauri updater
+    - Try manual download from GitHub releases
+    - Check disk space for download
+  </Accordion>
+  
+  <Accordion title="CLI Proxy update gets stuck" icon="spinner">
+    **Solutions**:
+    - Manually stop the server before updating
+    - Close any terminal windows using the proxy
+    - Check if antivirus is blocking the download
+    - Ensure you have write permissions to the install directory
+  </Accordion>
+  
+  <Accordion title="Version switch downloads wrong architecture" icon="microchip">
+    **Solutions**:
+    - Verify your system architecture (x64 vs ARM)
+    - Check GitHub releases for compatible build
+    - Manually download correct version
+    - Report issue if architecture detection fails
+  </Accordion>
+  
+  <Accordion title="Update check says 'Not logged in'" icon="user-slash">
+    **Solutions**:
+    - Ensure CLI Proxy is running
+    - Verify you're authenticated (Settings → Status)
+    - Restart CLI Proxy server
+    - Check API base URL and management key
+  </Accordion>
+</AccordionGroup>
+
+## Update Best Practices
+
+<Steps>
+  <Step title="Enable Auto-Start">
+    Ensure **Auto Start** is enabled so updates persist across restarts
+  </Step>
+  <Step title="Check Regularly">
+    Manually check for updates weekly if auto-check is disabled
+  </Step>
+  <Step title="Read Release Notes">
+    Review what's new before updating to understand changes
+  </Step>
+  <Step title="Backup Auth Files">
+    Use "Download All" in Providers page before major updates
+  </Step>
+</Steps>
+
+## Manual Update Process
+
+If automatic updates fail, you can update manually:
+
+### Desktop App
+
+1. Visit [ZeroLimit Releases](https://github.com/0xtbug/zero-limit/releases)
+2. Download the latest version for your platform
+3. Install over existing installation
+4. Launch ZeroLimit - settings are preserved
+
+### CLI Proxy
+
+1. Visit [CLIProxyAPI Releases](https://github.com/router-for-me/CLIProxyAPI/releases) (or Plus variant)
+2. Download the asset for your OS (e.g., `windows_x86_64.zip`)
+3. Extract to your existing CLI Proxy directory
+4. Replace the old executable
+5. Restart from ZeroLimit Settings
+
+## Version History
+
+### Desktop App
+
+View version history:
+- **About** page shows current version
+- Release notes available on GitHub
+- Changelog included in repository
+
+### CLI Proxy
+
+Track CLI Proxy versions:
+- **Settings** page displays installed version and build date
+- GitHub releases include detailed changelogs
+- API changelog available in CLI Proxy repository
+
+## Security Considerations
+
+<Warning>
+  ZeroLimit only downloads updates from official sources:
+  - Desktop: Tauri's signed update endpoint
+  - CLI Proxy: GitHub releases (HTTPS only)
+  
+  Never download ZeroLimit or CLI Proxy from third-party sites.
+</Warning>
+
+### Signature Verification
+
+- **Desktop Updates**: Tauri updater verifies digital signatures
+- **CLI Proxy Updates**: Downloaded via HTTPS from GitHub
+- **Integrity Checks**: File hashes validated where available
+
+## Automatic vs. Manual Updates
+
+| Feature | Desktop App | CLI Proxy |
+|---------|-------------|----------|
+| **Auto Check** | ✅ Background | ❌ Manual only |
+| **Auto Download** | ✅ Optional | ❌ Manual trigger |
+| **Auto Install** | ✅ After download | ✅ After manual trigger |
+| **Restart Required** | ✅ Yes | ✅ Yes (server) |
+| **User Prompt** | ✅ Toast notification | ❌ Settings page only |
+
+<Tip>
+  For maximum control, check for CLI Proxy updates monthly via the Settings page.
+</Tip>
+
+## Rollback Support
+
+### Desktop App
+
+If an update causes issues:
+1. Uninstall current version
+2. Download previous version from GitHub releases
+3. Install older version
+4. Disable auto-updates temporarily
+
+### CLI Proxy
+
+If a CLI Proxy update fails:
+1. Keep backups of your executable before updating
+2. Replace new executable with backup
+3. Restart server from Settings
+4. Report issue on GitHub
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Settings Guide" icon="gear" href="/configuration/settings">
+    Configure update preferences and CLI Proxy settings
+  </Card>
+  <Card title="Troubleshooting" icon="screwdriver-wrench" href="/guides/troubleshooting">
+    Common issues and solutions
+  </Card>
+</CardGroup>

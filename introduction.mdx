@@ -1,0 +1,129 @@
+---
+title: Welcome to ZeroLimit
+description: Cross-platform desktop application for monitoring AI coding assistant quotas across multiple providers
+---
+
+<img src="https://raw.githubusercontent.com/0xtbug/zero-limit/main/public/icon.png" width="128" height="128" alt="ZeroLimit Logo" />
+
+# Welcome to ZeroLimit
+
+ZeroLimit is a **cross-platform desktop application** for monitoring AI coding assistant quotas using [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI). Track your usage across multiple AI providers in one unified dashboard.
+
+Built with **Tauri + React + Rust**, ZeroLimit runs seamlessly on **Windows**, **macOS**, and **Linux**.
+
+<CardGroup cols={2}>
+  <Card title="Multi-Provider Support" icon="plug">
+    Monitor Gemini, Claude, OpenAI, Antigravity, Kiro, and GitHub Copilot accounts all in one place
+  </Card>
+  <Card title="Real-time Dashboard" icon="chart-line">
+    Track usage per account with visual progress bars and usage statistics
+  </Card>
+  <Card title="System Tray Integration" icon="window-restore">
+    Quick access from your taskbar with background operation support
+  </Card>
+  <Card title="One-Click Proxy Control" icon="bolt">
+    Start and stop CLIProxyAPI with a single click, with auto-start options
+  </Card>
+  <Card title="Dark/Light Theme" icon="moon">
+    Beautiful UI with full theme support that adapts to your preferences
+  </Card>
+  <Card title="Multilingual" icon="globe">
+    Support for English, Chinese, Indonesian, Japanese, Korean, Vietnamese, and Thai
+  </Card>
+</CardGroup>
+
+## Supported AI Providers
+
+ZeroLimit integrates with the following AI coding assistants through OAuth authentication:
+
+| Provider | Auth Method | Support |
+|----------|-------------|----------|
+| Google Gemini | OAuth | Standard |
+| Anthropic Claude | OAuth | Standard |
+| OpenAI Codex | OAuth | Standard |
+| Antigravity | OAuth | Standard |
+| Kiro (CodeWhisperer) | OAuth | Plus Only |
+| GitHub Copilot | OAuth | Plus Only |
+
+<Note>
+  **Plus version** provides additional support for GitHub Copilot and Kiro. Download from [CLIProxyAPI Plus Releases](https://github.com/router-for-me/CLIProxyAPIPlus/releases).
+</Note>
+
+## Key Features
+
+### Comprehensive Quota Monitoring
+
+ZeroLimit provides real-time visibility into your AI coding assistant usage:
+
+- **Visual Progress Bars** - See quota consumption at a glance
+- **Usage Statistics** - Track total requests, successful calls, and failures
+- **Token Tracking** - Monitor cached tokens and reasoning tokens
+- **Time-based Charts** - View usage trends by hour or by day
+- **Model Breakdown** - Detailed statistics per AI model
+- **API Analytics** - Request and token counts by provider
+
+### Intelligent Dashboard
+
+The dashboard page offers:
+
+- Active account count display
+- System connection status monitoring
+- Request trend visualization with customizable time grouping
+- Token usage trends with multi-line comparisons
+- Expandable API details with model-level breakdowns
+- Comprehensive model statistics table
+
+### Flexible Configuration
+
+<Tabs>
+  <Tab title="Auto Download">
+    Easiest setup method - ZeroLimit automatically downloads and configures CLI Proxy for you. Choose between Standard and Plus versions with a simple wizard.
+  </Tab>
+  <Tab title="Manual Setup">
+    For users who prefer control - specify the path to your existing CLI Proxy executable and configure the management key manually.
+  </Tab>
+  <Tab title="Remote Server">
+    Connect to a remote HTTPS server by providing the API base URL and management key. Perfect for team deployments.
+  </Tab>
+</Tabs>
+
+## Platform Support
+
+<CardGroup cols={3}>
+  <Card title="Windows" icon="windows">
+    NSIS installer (x64/ARM64), MSI installer, and portable executable
+  </Card>
+  <Card title="macOS" icon="apple">
+    Apple Silicon (M1/M2/M3) and Intel builds available as DMG
+  </Card>
+  <Card title="Linux" icon="linux">
+    Debian/Ubuntu (.deb), Fedora/RHEL (.rpm), and Universal (.AppImage)
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+- **Frontend**: React 19 with TypeScript
+- **Desktop Framework**: Tauri 2.x
+- **Backend**: Rust
+- **UI Components**: Radix UI + Tailwind CSS
+- **Charts**: Recharts
+- **State Management**: Zustand
+- **Internationalization**: i18next
+- **Build Tool**: Vite
+
+## Auto-Update Support
+
+ZeroLimit includes built-in automatic update checking to ensure you always have the latest features and security improvements.
+
+<Tip>
+  Ready to get started? Head over to the [Installation Guide](/installation) to download and install ZeroLimit on your platform.
+</Tip>
+
+## Open Source
+
+ZeroLimit is open-source software licensed under the MIT License. Contributions are welcome!
+
+- **Repository**: [github.com/0xtbug/zero-limit](https://github.com/0xtbug/zero-limit)
+- **Issues**: Report bugs and request features on GitHub
+- **Version**: 1.1.3

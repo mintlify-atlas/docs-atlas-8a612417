@@ -1,0 +1,462 @@
+---
+title: Remote HTTPS Server Connection
+description: Connect ZeroLimit to a remote CLI Proxy server over HTTPS
+---
+
+If you're running CLI Proxy on a remote server or want to connect to an instance hosted elsewhere, you can skip the local setup and connect directly via HTTPS.
+
+This is useful for:
+
+- Connecting to a shared team CLI Proxy instance
+- Using a cloud-hosted proxy server
+- Accessing CLI Proxy from multiple devices
+- Separating the proxy server from the client application
+
+## Prerequisites
+
+Before connecting to a remote server, you need:
+
+<Steps>
+  <Step title="Remote Server Running">
+    A CLI Proxy server running on a remote host with:
+    - Network accessibility from your location
+    - HTTPS configured (strongly recommended for remote access)
+    - Firewall rules allowing incoming connections
+  </Step>
+
+  <Step title="API Base URL">
+    The full URL to your CLI Proxy server, for example:
+    - `https://llm.yourdomain.com`
+    - `https://proxy.example.com:8317`
+    - `http://192.168.1.100:8317` (local network only, not recommended for internet)
+  </Step>
+
+  <Step title="Management Key">
+    The `secret-key` value from your remote server's `config.yaml` file.
+    
+    **Finding the key on the remote server:**
+    ```bash
+    # SSH into your remote server
+    ssh user@remote-host
+    
+    # Navigate to CLI Proxy directory
+    cd /path/to/cli-proxy-api
+    
+    # View the secret-key
+    grep secret-key config.yaml
+    ```
+    
+    Output:
+    ```yaml
+    secret-key: "your-secret-key-here"
+    ```
+  </Step>
+</Steps>
+
+## Connection Steps
+
+<Steps>
+  <Step title="Skip Onboarding">
+    When you first launch ZeroLimit, click **Skip For Now** on the welcome screen.
+    
+    This bypasses the local setup wizard and takes you directly to the login page.
+  </Step>
+
+  <Step title="Enter Connection Details">
+    On the login page, fill in the form:
+    
+    **API Base URL**:
+    - Enter the full URL to your remote server
+    - Include the protocol (`https://` or `http://`)
+    - Include the port if non-standard (e.g., `:8317`)
+    - Examples:
+      - `https://proxy.mydomain.com`
+      - `https://llm.company.com:8317`
+      - `http://10.0.1.5:8317` (local network)
+    
+    **Management Key**:
+    - Enter the `secret-key` from the remote server's `config.yaml`
+    - This is the authentication credential
+    - Must match exactly (case-sensitive)
+    
+    **Remember Credentials** (optional):
+    - Check this box to save your credentials securely
+    - You'll stay logged in across app restarts
+    - Credentials are encrypted in local storage
+    
+    <Warning>Only enable "Remember Credentials" on devices you trust. The management key grants full access to your CLI Proxy instance.</Warning>
+  </Step>
+
+  <Step title="Login">
+    Click the **Login** button to connect.
+    
+    ZeroLimit will:
+    1. Normalize the API base URL (adds `/v0/management` path)
+    2. Send an authentication request to the management API
+    3. Fetch the server configuration and validate access
+    4. Update connection status to "connected"
+    5. Store credentials if "Remember" is checked
+    
+    **Success**: You'll be redirected to the dashboard
+    
+    **Failure**: An error message will appear (see Troubleshooting below)
+  </Step>
+
+  <Step title="Verify Connection">
+    After successful login, verify your connection:
+    
+    - Dashboard should show server status and version
+    - Connection indicator should be green/connected
+    - You should see your configured providers (if any)
+    
+    The top bar displays:
+    - Server version (e.g., "v1.2.3")
+    - Connection status: "Connected" in green
+  </Step>
+</Steps>
+
+## API URL Normalization
+
+ZeroLimit automatically normalizes the API base URL you enter:
+
+**Input examples:**
+```
+https://proxy.example.com
+https://proxy.example.com/
+https://proxy.example.com/v0/management
+https://proxy.example.com/v0/management/
+```
+
+**Normalized to:**
+```
+https://proxy.example.com
+```
+
+The management API path (`/v0/management`) is appended automatically when making requests.
+
+**Implementation** (`auth.store.ts:80`):
+```typescript
+const apiBase = normalizeApiBase(credentials.apiBase);
+apiClient.setConfig({ apiBase, managementKey });
+```
+
+## Connection Lifecycle
+
+### Initial Connection
+
+1. **User enters credentials** on login page
+2. **Set connecting status**:
+   ```typescript
+   set({ connectionStatus: 'connecting' });
+   ```
+3. **Configure API client**:
+   ```typescript
+   apiClient.setConfig({ apiBase, managementKey });
+   ```
+4. **Fetch server config** (`auth.store.ts:87`):
+   ```typescript
+   await useConfigStore.getState().fetchConfig(true);
+   ```
+5. **Update state on success**:
+   ```typescript
+   set({
+     isAuthenticated: true,
+     apiBase,
+     managementKey,
+     rememberPassword,
+     connectionStatus: 'connected',
+     connectionError: null,
+   });
+   ```
+
+### Session Restoration
+
+If "Remember Credentials" was enabled, ZeroLimit automatically restores your session on launch:
+
+1. **Load saved credentials** from secure storage
+2. **Normalize API base URL**
+3. **Configure API client**
+4. **Attempt auto-login**
+5. **Success**: Continue to dashboard
+6. **Failure**: Show login page
+
+### Connection Monitoring
+
+ZeroLimit monitors connection health:
+
+- **Health checks**: Periodic API pings to verify server availability
+- **Network errors**: Detected via failed requests
+- **Unauthorized**: Server rejects management key
+
+**Event listeners** (`auth.store.ts:188-202`):
+```typescript
+window.addEventListener('unauthorized', () => {
+  useAuthStore.getState().logout();
+});
+
+window.addEventListener('network-error', () => {
+  useAuthStore.getState().updateConnectionStatus(
+    'disconnected',
+    'Network error or server unreachable'
+  );
+});
+```
+
+## HTTPS Configuration
+
+For remote access, HTTPS is **strongly recommended**.
+
+### Why HTTPS?
+
+- **Encryption**: Protects your management key in transit
+- **Authentication**: Verifies server identity
+- **Security**: Prevents man-in-the-middle attacks
+
+### Setting up HTTPS on the Server
+
+<Tabs>
+  <Tab title="Reverse Proxy (Recommended)">
+    Use a reverse proxy like Nginx or Caddy to handle HTTPS:
+    
+    **Nginx example:**
+    ```nginx
+    server {
+      listen 443 ssl http2;
+      server_name proxy.yourdomain.com;
+      
+      ssl_certificate /path/to/cert.pem;
+      ssl_certificate_key /path/to/key.pem;
+      
+      location / {
+        proxy_pass http://localhost:8317;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+      }
+    }
+    ```
+    
+    **Caddy example (auto HTTPS):**
+    ```caddy
+    proxy.yourdomain.com {
+      reverse_proxy localhost:8317
+    }
+    ```
+  </Tab>
+  <Tab title="Self-Signed Certificate">
+    For testing or internal use, you can use a self-signed certificate:
+    
+    1. **Generate certificate**:
+       ```bash
+       openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+       ```
+    
+    2. **Configure CLI Proxy** (if it supports direct HTTPS)
+    
+    3. **Trust certificate on client**:
+       - Windows: Import to Trusted Root Certification Authorities
+       - macOS: Add to Keychain and trust
+       - Linux: Add to `/usr/local/share/ca-certificates/` and run `update-ca-certificates`
+    
+    <Warning>Self-signed certificates show security warnings. Only use for testing or trusted internal networks.</Warning>
+  </Tab>
+  <Tab title="Let's Encrypt">
+    For internet-facing servers, use Let's Encrypt for free certificates:
+    
+    **With Certbot:**
+    ```bash
+    sudo certbot --nginx -d proxy.yourdomain.com
+    ```
+    
+    **With Caddy**:
+    Caddy automatically obtains and renews Let's Encrypt certificates. No configuration needed!
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+### Connection Failed
+
+**Error**: "Connection failed" or network timeout
+
+**Causes:**
+- Server is not running
+- Firewall blocking access
+- Incorrect URL
+- Network issues
+
+**Solutions:**
+
+1. **Verify server is running**:
+   ```bash
+   # On the server
+   systemctl status cli-proxy-api  # if using systemd
+   # or
+   ps aux | grep cli-proxy-api
+   ```
+
+2. **Test connectivity**:
+   ```bash
+   # From your local machine
+   curl -v https://proxy.yourdomain.com/v0/management/health
+   ```
+
+3. **Check firewall rules**:
+   ```bash
+   # Allow port 8317 (or your configured port)
+   sudo ufw allow 8317/tcp  # Ubuntu/Debian
+   sudo firewall-cmd --add-port=8317/tcp --permanent  # CentOS/RHEL
+   ```
+
+4. **Verify DNS resolution**:
+   ```bash
+   nslookup proxy.yourdomain.com
+   ping proxy.yourdomain.com
+   ```
+
+### Authentication Failed
+
+**Error**: "Login failed" or "Authentication failed"
+
+**Causes:**
+- Incorrect management key
+- Key mismatch between client and server
+
+**Solutions:**
+
+1. **Verify secret-key on server**:
+   ```bash
+   ssh user@remote-host
+   cat /path/to/cli-proxy-api/config.yaml | grep secret-key
+   ```
+
+2. **Check for whitespace**:
+   - Secret keys are trimmed in ZeroLimit: `.trim()`
+   - Ensure no extra spaces in `config.yaml`
+
+3. **Update server config** if needed:
+   ```yaml
+   secret-key: "new-key-here"
+   ```
+   Then restart CLI Proxy:
+   ```bash
+   systemctl restart cli-proxy-api
+   ```
+
+### SSL/TLS Errors
+
+**Error**: "SSL certificate error" or "Certificate validation failed"
+
+**Causes:**
+- Self-signed certificate not trusted
+- Expired certificate
+- Certificate domain mismatch
+
+**Solutions:**
+
+1. **For self-signed certificates**:
+   - Import the certificate to your OS trust store
+   - Or use HTTP for testing (not recommended for production)
+
+2. **For expired certificates**:
+   - Renew with Let's Encrypt: `certbot renew`
+   - Or generate new self-signed certificate
+
+3. **For domain mismatch**:
+   - Ensure URL matches certificate CN/SAN
+   - Access via correct domain name, not IP address
+
+### Frequent Disconnections
+
+**Symptoms**: Connection drops and reconnects repeatedly
+
+**Causes:**
+- Unstable network
+- Server restarting
+- Firewall timeout
+
+**Solutions:**
+
+1. **Check server logs** for crashes or restarts
+2. **Adjust firewall timeout** settings
+3. **Use a more stable network connection**
+4. **Check server resource usage** (CPU, memory, disk)
+
+### Can't Access from Other Devices
+
+**Symptoms**: Can't connect from other computers/locations
+
+**Causes:**
+- Firewall blocking external access
+- Server only listening on localhost
+- Port forwarding not configured
+
+**Solutions:**
+
+1. **Configure server to listen on all interfaces** (`config.yaml`):
+   ```yaml
+   server:
+     host: 0.0.0.0  # Not 127.0.0.1
+     port: 8317
+   ```
+
+2. **Open firewall for external access**:
+   ```bash
+   sudo ufw allow from any to any port 8317 proto tcp
+   ```
+
+3. **Configure port forwarding** if behind NAT
+
+4. **Use a reverse proxy** with proper HTTPS (recommended)
+
+## Security Best Practices
+
+<Warning>Remote access exposes your CLI Proxy to the internet. Follow these security practices.</Warning>
+
+1. **Always use HTTPS** for remote connections
+2. **Use strong management keys**:
+   - At least 16 characters
+   - Mix of letters, numbers, symbols
+   - Generate with: `openssl rand -base64 24`
+3. **Restrict access** with firewall rules:
+   ```bash
+   # Only allow specific IPs
+   sudo ufw allow from 203.0.113.5 to any port 8317
+   ```
+4. **Monitor access logs** for unauthorized attempts
+5. **Rotate keys periodically**
+6. **Use VPN** for additional security layer
+7. **Keep software updated** to patch security vulnerabilities
+
+## After Connection
+
+Once connected to a remote server:
+
+<CardGroup cols={2}>
+  <Card title="Provider Management" icon="plug" href="/configuration/providers">
+    Configure providers on the remote server
+  </Card>
+  <Card title="Monitoring Usage" icon="chart-line" href="/guides/monitoring-usage">
+    Monitor server health and usage
+  </Card>
+  <Card title="Managing Proxy" icon="server" href="/guides/managing-proxy">
+    Start, stop, and configure the proxy
+  </Card>
+  <Card title="Troubleshooting" icon="screwdriver-wrench" href="/guides/troubleshooting">
+    Common issues and solutions
+  </Card>
+</CardGroup>
+
+## Switching to Local Setup
+
+If you later want to set up a local CLI Proxy instance:
+
+1. Logout from the remote server
+2. Open Settings > CLI Proxy Server
+3. Configure local executable path
+4. Restart ZeroLimit
+5. Login with `http://localhost:8317` and local management key
+
+You can switch between local and remote connections as needed by changing the API Base URL on the login page.

@@ -1,0 +1,241 @@
+---
+title: Project Structure
+description: Detailed overview of ZeroLimit's codebase architecture
+---
+
+## Repository Overview
+
+ZeroLimit is built with **Tauri 2 + React + Rust**, organized into frontend (React/TypeScript) and backend (Rust) components.
+
+```
+zero-limit/
+├── src/                  # React + TypeScript frontend
+├── src-tauri/            # Rust backend + Tauri configuration
+├── public/               # Static assets (icons, images)
+├── docs/                 # User documentation
+├── scripts/              # Build and maintenance scripts
+├── screenshots/          # Application screenshots
+├── .github/              # GitHub workflows and templates
+└── dist/                 # Build output (generated)
+```
+
+## Frontend Architecture (`src/`)
+
+The frontend follows a **feature-sliced design** with clear separation of concerns:
+
+### Directory Structure
+
+```
+src/
+├── features/             # Feature modules (one per app section)
+│   ├── about/            # About page + update checking
+│   ├── auth/             # Authentication and login
+│   ├── dashboard/        # Main dashboard with usage overview
+│   ├── logs/             # Server and error logs viewer
+│   ├── onboarding/       # First-time user setup flow
+│   ├── providers/        # Provider management (OAuth)
+│   ├── quota/            # Quota monitoring and tracking
+│   └── settings/         # Application settings
+├── shared/               # Shared utilities and components
+│   ├── components/       # Reusable UI components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Third-party library wrappers
+│   └── utils/            # Helper functions
+├── layouts/              # Page layout components
+├── router/               # React Router configuration
+├── i18n/                 # Internationalization
+│   └── locales/          # Translation files (en, zh, id, ja, ko, vi, th)
+├── services/             # External integrations
+│   ├── api/              # CLIProxyAPI client
+│   ├── storage/          # Local storage utilities
+│   └── tauri/            # Tauri backend communication
+├── types/                # TypeScript type definitions
+├── constants/            # Application constants
+├── App.tsx               # Root component
+└── main.tsx              # Application entry point
+```
+
+### Feature Module Pattern
+
+Each feature follows a consistent structure:
+
+```
+features/[feature-name]/
+├── [Feature]Page.tsx           # Main page component
+├── use[Feature]Presenter.ts    # Business logic hook (optional)
+├── [feature].store.ts          # Zustand state management (optional)
+└── components/                 # Feature-specific components (optional)
+```
+
+**Example:** Dashboard feature
+- `DashboardPage.tsx` - UI component
+- `useDashboardPresenter.ts` - Data fetching and business logic
+- `usage.store.ts` - Global usage state (Zustand)
+
+### State Management
+
+ZeroLimit uses **Zustand** for global state:
+
+- `auth.store.ts` - Authentication state and tokens
+- `usage.store.ts` - Usage metrics and quota data
+- `config.store.ts` - Application configuration
+- `cliProxy.store.ts` - CLI Proxy server state
+- `theme.store.ts` - UI theme (dark/light)
+- `language.store.ts` - Selected language
+- `update.store.ts` - Update availability and version
+
+### UI Components
+
+Built with **Radix UI** primitives + **Tailwind CSS**:
+- Alert dialogs, modals, select dropdowns
+- Progress bars for quota tracking
+- Scroll areas for logs
+- Custom components in `shared/components/`
+
+### Internationalization
+
+Supported languages via **react-i18next**:
+- English (en)
+- Chinese (zh)
+- Indonesian (id)
+- Japanese (ja)
+- Korean (ko)
+- Vietnamese (vi)
+- Thai (th)
+
+Translation files: `src/i18n/locales/[lang].json`
+
+## Backend Architecture (`src-tauri/`)
+
+### Directory Structure
+
+```
+src-tauri/
+├── src/
+│   ├── commands/         # Tauri command handlers (Rust functions callable from frontend)
+│   ├── lib.rs            # Library entry point
+│   └── main.rs           # Application entry point
+├── capabilities/         # Tauri security capabilities
+├── icons/                # Platform-specific icons
+│   ├── android/
+│   └── ios/
+├── Cargo.toml            # Rust dependencies
+├── tauri.conf.json       # Tauri configuration
+├── build.rs              # Build script
+└── target/               # Build artifacts (generated)
+```
+
+### Rust Dependencies
+
+**Core:**
+- `tauri` - Desktop app framework with tray icon support
+- `serde` + `serde_json` - Serialization for frontend communication
+
+**Tauri Plugins:**
+- `tauri-plugin-shell` - Execute shell commands
+- `tauri-plugin-dialog` - Native file/folder dialogs
+- `tauri-plugin-fs` - Filesystem access
+- `tauri-plugin-updater` - Auto-update functionality
+- `tauri-plugin-process` - Process management
+- `tauri-plugin-os` - OS information
+
+**Utilities:**
+- `reqwest` - HTTP client for API calls
+- `tokio` - Async runtime
+- `zip`, `tar`, `flate2` - Archive extraction (for CLI Proxy downloads)
+- `dirs` - Platform-specific directories
+- `opener` - Open URLs in default browser
+
+### Tauri Commands
+
+Rust functions exposed to frontend via `#[tauri::command]`:
+- File system operations (download, extract, read)
+- CLI Proxy management (start, stop, detect)
+- OS-specific utilities
+
+Invoked from frontend using `@tauri-apps/api`.
+
+## Configuration Files
+
+### Build and Development
+
+- **`package.json`** - Node dependencies and npm scripts
+- **`vite.config.ts`** - Vite bundler configuration
+- **`tsconfig.json`** - TypeScript compiler options
+- **`tailwind.config.js`** - Tailwind CSS configuration (if present)
+- **`components.json`** - shadcn/ui component configuration
+
+### Code Quality
+
+- **`.editorconfig`** - Editor formatting rules (2 spaces, LF, UTF-8)
+- **`.prettierrc`** - Prettier configuration (no semicolons, single quotes)
+- **`.prettierignore`** - Files to exclude from formatting
+
+### Tauri Specific
+
+- **`src-tauri/tauri.conf.json`** - Window settings, bundle config, plugins
+- **`src-tauri/Cargo.toml`** - Rust crate metadata and dependencies
+
+### Documentation
+
+- **`README.md`** - Project overview and quick start
+- **`AGENTS.md`** - Repository guidelines for developers
+- **`docs/USAGE.md`** - User guide
+
+## Build Outputs
+
+### Development
+- Frontend dev server: `http://localhost:1420` (in-memory)
+- Rust debug build: `src-tauri/target/debug/`
+
+### Production
+- Frontend bundle: `dist/` (HTML, CSS, JS)
+- Rust release binary: `src-tauri/target/release/`
+- Installers: `src-tauri/target/release/bundle/`
+  - Windows: `nsis/`, `msi/`
+  - macOS: `dmg/`, `macos/`
+  - Linux: `deb/`, `rpm/`, `appimage/`
+
+## Architecture Patterns
+
+### Frontend
+
+1. **Presenter Pattern**: Business logic separated into `use[Feature]Presenter` hooks
+2. **Feature Slices**: Each feature is self-contained with its own components, stores, and logic
+3. **Shared Utilities**: Common code in `shared/` for reuse across features
+4. **Type Safety**: Full TypeScript coverage with strict mode
+
+### Backend
+
+1. **Command Pattern**: Tauri commands act as backend API endpoints
+2. **Async/Await**: All I/O operations use Tokio async runtime
+3. **Error Handling**: `thiserror` for structured error types
+4. **Cross-platform**: Platform-agnostic code where possible, conditional compilation where necessary
+
+## Key Technologies
+
+| Layer | Technology | Purpose |
+|-------|------------|----------|
+| **Desktop Framework** | Tauri 2 | Native desktop wrapper |
+| **Frontend** | React 19 + TypeScript | UI and application logic |
+| **Backend** | Rust | System operations and CLI Proxy management |
+| **Build Tool** | Vite | Fast dev server and bundling |
+| **Styling** | Tailwind CSS 4 | Utility-first styling |
+| **UI Components** | Radix UI | Accessible primitives |
+| **State Management** | Zustand | Global state |
+| **Routing** | React Router 7 | Client-side navigation |
+| **HTTP Client** | Axios (frontend), reqwest (backend) | API communication |
+| **i18n** | react-i18next | Internationalization |
+| **Animation** | Motion (Framer Motion) | UI animations |
+| **Charts** | Recharts | Quota visualization |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building from Source" icon="hammer" href="/development/building-from-source">
+    Set up your development environment
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing">
+    Start contributing to ZeroLimit
+  </Card>
+</CardGroup>
