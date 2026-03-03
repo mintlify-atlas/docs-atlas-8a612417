@@ -1,0 +1,119 @@
+{
+  "projectType": "saas",
+  "projectName": "ZeroLimit",
+  "projectDescription": "A cross-platform desktop application for monitoring AI coding assistant quotas across multiple providers using CLIProxyAPI.",
+  "theme": "palm",
+  "primaryColor": "#0066FF",
+  "lightColor": "#4D94FF",
+  "darkColor": "#0052CC",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/quota-monitoring",
+              "features/proxy-management",
+              "features/multi-provider-support",
+              "features/system-tray",
+              "features/auto-updates"
+            ]
+          },
+          {
+            "group": "Setup Guide",
+            "pages": [
+              "setup/onboarding",
+              "setup/auto-download",
+              "setup/manual-setup",
+              "setup/remote-server"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/settings",
+              "configuration/providers",
+              "configuration/proxy-settings"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/adding-accounts",
+              "guides/monitoring-usage",
+              "guides/managing-proxy",
+              "guides/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Technical Reference",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "technical/architecture-overview",
+              "technical/frontend-structure",
+              "technical/backend-structure"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/tauri-commands",
+              "api/cliproxyapi-integration",
+              "api/quota-services",
+              "api/auth-services"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/building-from-source",
+              "development/project-structure",
+              "development/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-provider quota monitoring (Gemini, Claude, OpenAI, Antigravity, Kiro, Copilot)",
+    "Real-time dashboard with visual progress bars",
+    "One-click CLIProxyAPI proxy control (start/stop)",
+    "System tray integration for quick access",
+    "Auto-download and setup for CLIProxyAPI",
+    "Dark/Light theme support",
+    "Multilingual support (7 languages)",
+    "Cross-platform desktop app (Windows, macOS, Linux)",
+    "Auto-update functionality"
+  ],
+  "publicApiSurface": [
+    "start_cli_proxy(exe_path) - Start CLI Proxy server",
+    "stop_cli_proxy() - Stop CLI Proxy server",
+    "is_cli_proxy_running() - Check proxy status",
+    "download_and_extract_proxy(url, target_dir) - Download and extract proxy binary",
+    "find_alternate_proxy_exe(current_exe_path, target_version) - Find alternate proxy executable",
+    "check_proxy_version() - Check proxy version",
+    "set_run_in_background(enabled) - Configure background mode",
+    "open_external_url(url) - Open URL in browser",
+    "AuthService.login(credentials) - Authenticate with CLIProxyAPI",
+    "QuotaService.fetchQuota(provider, authFile) - Fetch quota for provider",
+    "OAuthService.initiateOAuth(provider, projectId) - Start OAuth flow",
+    "ConfigService.getServerInfo() - Get server version info",
+    "UsageService.fetchUsageStats() - Fetch usage statistics",
+    "LogsService.fetchLogs() - Fetch proxy logs"
+  ]
+}
